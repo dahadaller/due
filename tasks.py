@@ -1,25 +1,25 @@
 import json
-import string
 
 class TaskList:
     """docstring"""
 
-    def __init__(self, path, global_task=None):
+    def __init__(self, path, root_task=None):
 
         if not path:
-            self.global_task = global_task
+            self.root_task = root_task
         else:
             # TODO:  Flashcard for import json into dict
             with open(path, "r") as read_file:
-                self.global_task = Task(
+                self.root_task = Task(
                     task_id='',
-                    task_name='global',
+                    task_name='root',
                     subtasks= json.load(read_file)
                 )
 
-    def filter_by_task_id(self, composite_task_id):
+    # TODO: Revise to allow for decimal task id's
+    def filter_tasks_by_id(self, composite_task_id):
 
-        task_list = self.global_task.subtasks
+        task_list = self.root_task.subtasks
         for id in composite_task_id:
             for task in task_list:
                 if task.task_id == id:
@@ -27,45 +27,20 @@ class TaskList:
                     break
 
         print(task)
-        return task
-    #
-    # def filter_by_date(self, date):
-    #
-    #     task_list = self.global_task.subtasks
-    #
-    #     for task in task_list:
-    #         if task.name == task_name:
-    #             break
-    #         else:
-    #             task_list = task.subtasks
-    #
-    #     print(task)
+        print(TaskList(root_task=task))
+        return TaskList(root_task=task) #todo
 
-    def __str__(self):
 
-        s = """
-        Task Name: {task_name}
-        Deadline: {deadline}
-        Task ID: {task_id}
-        """
-
-        ret = []
-        for task in self.global_task.subtasks:
-            ret.append(
-                s.format(
-                    task_name = task.name,
-                    deadline = task.deadline,
-                    task_id = task.task_id
-                )
-            )
-        return ''.join(ret)
+    def __repr__(self):
+        output = []
+        for subtask in self.root_task.subtasks:
+            output.append(subtask.print())
+        return ''.join(output)
 
 
 
 class Task:
     """docstring"""
-
-    TASK_IDs = string.ascii_letters + string.digits
 
     def __init__(self, task_id, task_name, deadline=None, deadline_changes = {}, subtasks = [], complete=False):
 
@@ -78,7 +53,6 @@ class Task:
 
         # if subtasks is an array of dictionaries, Depth First Search
         if subtasks:
-            assert len(subtasks) < len(Task.TASK_IDs), "Maximum number of subtasks reached"
             self.subtasks = []
             for subtask in subtasks:
                 self.subtasks.append(
@@ -95,20 +69,24 @@ class Task:
         else:
             self.subtasks = subtasks
 
-
-
-    def __str__(self):
-        s = """
-        Task Name: {task_name}
-        Deadline: {deadline}
-        Deadline Changes: {deadline_changes}
-        """
-        return s.format(
-            task_name = self.name,
+    def print(self,indent=0):
+        indents = ' ' * indent
+        checkbox = "☑" if self.complete else "☐"
+        output = "{indents}{complete} {deadline} {task_id} {task_name}\n{subtasks}".format(
+            indents = indents,
+            task_id = self.task_id,
+            task_name =  self.name,
+            complete = checkbox,
             deadline = self.deadline,
-            deadline_changes = self.deadline_changes
+            subtasks = ''.join([s.print(indent+4) for s in self.subtasks])
         )
+        return output
 
+
+    def __repr__(self):
+        return self.print()
+
+    # TODO: revise to allow for decimla task id's
     def add_subtask(self, task_name, deadline=None, deadline_changes = {}, subtasks = [], complete=False):
         prev_task_id = self.subtasks[-1]['task_id']
         new_task_id = Task.TASK_IDs[Task.TASK_IDs.find(prev_task_id) + 1]
@@ -135,7 +113,7 @@ class Task:
         # filter all task objects in list by date
             # use datetime methods to create string for end of week
     # TODO: SHOW TODAY'S TASKS: generate a list of all tasks for today, sorted by milestone
-    # TODO:export to markdown for all of these views
+    # TODO:export to markdown/yaml for all of these views?
 
 
 # TODO: display an "error log" for each deferment as follows:
@@ -149,5 +127,6 @@ class Task:
 # TODO: implement function to filter deferments by category
 
 t = TaskList('todo.json')
-t.filter_by_task_id('a')
+print(t)
+# t.filter_by_task_id('a')
 # print(t)
