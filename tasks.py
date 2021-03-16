@@ -1,44 +1,5 @@
 import json
 
-class TaskList:
-    """docstring"""
-
-    def __init__(self, path, root_task=None):
-
-        if not path:
-            self.root_task = root_task
-        else:
-            # TODO:  Flashcard for import json into dict
-            with open(path, "r") as read_file:
-                self.root_task = Task(
-                    task_id='',
-                    task_name='root',
-                    subtasks= json.load(read_file)
-                )
-
-    # TODO: Revise to allow for decimal task id's
-    def filter_tasks_by_id(self, composite_task_id):
-
-        task_list = self.root_task.subtasks
-        for id in composite_task_id:
-            for task in task_list:
-                if task.task_id == id:
-                    task_list = task.subtasks
-                    break
-
-        print(task)
-        print(TaskList(root_task=task))
-        return TaskList(root_task=task) #todo
-
-
-    def __repr__(self):
-        output = []
-        for subtask in self.root_task.subtasks:
-            output.append(subtask.print())
-        return ''.join(output)
-
-
-
 class Task:
     """docstring"""
 
@@ -69,7 +30,15 @@ class Task:
         else:
             self.subtasks = subtasks
 
-    def print(self,indent=0):
+    def to_text(self, indent=0, max_depth=None):
+        if max_depth is not None:
+            if max_depth > 0:
+                subtasks = ''.join([s.to_text(indent+4, max_depth-1) for s in self.subtasks])
+            else:
+                subtasks = ''
+        else:
+            subtasks = ''.join([s.to_text(indent+4) for s in self.subtasks])
+
         indents = ' ' * indent
         checkbox = "☑" if self.complete else "☐"
         output = "{indents}{complete} {deadline} {task_id} {task_name}\n{subtasks}".format(
@@ -78,13 +47,17 @@ class Task:
             task_name =  self.name,
             complete = checkbox,
             deadline = self.deadline,
-            subtasks = ''.join([s.print(indent+4) for s in self.subtasks])
+            subtasks = subtasks
         )
         return output
 
 
     def __repr__(self):
-        return self.print()
+        if self.name == 'root' and self.task_id=='':
+            output = ''.join([s.to_text() for s in self.subtasks])
+        else:
+            output = self.to_text()
+        return output
 
     # TODO: revise to allow for decimla task id's
     def add_subtask(self, task_name, deadline=None, deadline_changes = {}, subtasks = [], complete=False):
@@ -100,6 +73,17 @@ class Task:
                 complete=complete
             )
         )
+
+    def filter_by_id(self, task_id):
+
+        task_list = self.subtasks
+        print(task_id.split('.'))
+        for id in task_id.split('.'):
+            for task in task_list:
+                if task.task_id == id:
+                    task_list = task.subtasks
+                    break
+        return task
 
 
 
@@ -125,8 +109,11 @@ class Task:
             # deferment_date    task_name   from    to  category    justification
 
 # TODO: implement function to filter deferments by category
+with open('todo.json', "r") as read_file:
+    t = Task(task_id='',
+        task_name='root',
+        subtasks= json.load(read_file))
 
-t = TaskList('todo.json')
 print(t)
-# t.filter_by_task_id('a')
+# print(t.filter_by_id('0.1').to_text())
 # print(t)
