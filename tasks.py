@@ -30,14 +30,14 @@ class Task:
         else:
             self.subtasks = subtasks
 
-    def to_text(self, indent=0, max_depth=None):
+    def to_string(self, indent=0, max_depth=None):
         if max_depth is not None:
             if max_depth > 0:
-                subtasks = ''.join([s.to_text(indent+4, max_depth-1) for s in self.subtasks])
+                subtasks = ''.join([s.to_string(indent+4, max_depth-1) for s in self.subtasks])
             else:
                 subtasks = ''
         else:
-            subtasks = ''.join([s.to_text(indent+4) for s in self.subtasks])
+            subtasks = ''.join([s.to_string(indent+4) for s in self.subtasks])
 
         indents = ' ' * indent
         checkbox = "☑" if self.complete else "☐"
@@ -54,9 +54,9 @@ class Task:
 
     def __repr__(self):
         if self.name == 'root' and self.task_id=='':
-            output = ''.join([s.to_text() for s in self.subtasks])
+            output = ''.join([s.to_string() for s in self.subtasks])
         else:
-            output = self.to_text()
+            output = self.to_string()
         return output
 
     # TODO: revise to allow for decimla task id's
@@ -77,12 +77,13 @@ class Task:
     def filter_by_id(self, task_id):
 
         task_list = self.subtasks
-        print(task_id.split('.'))
-        for id in task_id.split('.'):
-            for task in task_list:
-                if task.task_id == id:
-                    task_list = task.subtasks
-                    break
+
+        for i, id in enumerate(task_id.split('.')):
+            filtered = list(filter(lambda x: x.task_id == id, task_list))
+            assert filtered, 'No task at index [{i}] of task id [{task_id}] Check that your task id is correct.'.format(i=i,task_id=task_id)
+            task = filtered[0]
+            task_list = task.subtasks
+
         return task
 
 
@@ -114,6 +115,6 @@ with open('todo.json', "r") as read_file:
         task_name='root',
         subtasks= json.load(read_file))
 
-print(t)
-# print(t.filter_by_id('0.1').to_text())
+# print(t)
+print(t.filter_by_id('0').to_string())
 # print(t)
