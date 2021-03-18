@@ -94,7 +94,7 @@ class Task:
         task_list = self.subtasks
 
         for i, id in enumerate(task_id.split('.')):
-            filtered = list(filter(lambda x: x.task_id == id, task_list))
+            filtered = list(filter(lambda x: x.id == id, task_list))
             assert filtered, 'No task at index [{i}] of task id [{task_id}] Check that your task id is correct.'.format(i=i,task_id=task_id)
             task = filtered[0]
             task_list = task.subtasks
@@ -141,16 +141,19 @@ class Task:
 
     def next_id(self):
         id = self.id
-        id = id.rpartition('.')
+        id = list(id.rpartition('.'))
         id[-1] = int(id[-1]) + 1
         id[-1] = str(id[-1])
         id = ''.join(id)
         return id
 
     def add_subtask(self, subtask):
-        print(self.subtasks)
-        subtask.task_id = self.subtasks[-1].next_id()
+        if self.subtasks:
+            subtask.id = self.subtasks[-1].next_id()
+        else:
+            subtask.id = 0
         self.subtasks.append(subtask)
+        return self
 
 
 
@@ -178,13 +181,12 @@ class Task:
 
 t = Task.from_json('todo.json')
 print(t)
-print(Task.from_dict(t.to_dict()))
-# t.add_subtask(
-#     Task(
-#         task_name =  'do the thing',
-#         deadline  = '2021-03-18'
-#     )
-# )
+g =     Task(
+        task_name =  'do the thing',
+        deadline  = '2021-03-18'
+    )
+print(t.filter_by_id('0.1').add_subtask(g))
+print(t)
 # # print(t.filter_by_id('0'))
 # print(t.filter(lambda x: x.name.startswith('sec'))) # filter by task name
 # print(t.filter(lambda x: x.deadline <= '2021-04-03')) #filter by deadline
