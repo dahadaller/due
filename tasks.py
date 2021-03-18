@@ -13,7 +13,8 @@ class Task:
 
 
         # if subtasks is an array of dictionaries, Depth First Search
-        if subtasks:
+        # if isinstance(subtasks, dict):
+        if subtasks and isinstance(subtasks[0],dict):
             self.subtasks = []
             for subtask in subtasks:
                 self.subtasks.append(
@@ -29,6 +30,14 @@ class Task:
         # if subtasks is empty or is an array of Task objects
         else:
             self.subtasks = subtasks
+
+    @staticmethod
+    def from_json(file_path):
+        with open(file_path, "r") as read_file:
+            t = Task(task_id='root',
+                task_name='root',
+                subtasks= json.load(read_file))
+        return t
 
     def to_string(self, indent=0, max_depth=None):
         if max_depth is not None:
@@ -53,26 +62,26 @@ class Task:
 
 
     def __repr__(self):
-        if self.name == 'root' and self.task_id=='':
+        if self.name == 'root' and self.task_id=='root':
             output = ''.join([s.to_string() for s in self.subtasks])
         else:
             output = self.to_string()
         return output
 
-    # TODO: revise to allow for decimla task id's
-    def add_subtask(self, task_name, deadline=None, deadline_changes = {}, subtasks = [], complete=False):
-        prev_task_id = self.subtasks[-1]['task_id']
-        new_task_id = Task.TASK_IDs[Task.TASK_IDs.find(prev_task_id) + 1]
-        self.subtasks.append(
-            Task(
-                task_id = new_task_id,
-                task_name = task_name,
-                deadline=deadline,
-                deadline_changes=deadline_changes,
-                subtasks=subtasks,
-                complete=complete
-            )
-        )
+    # TODO: revise to allow for decimal task id's
+    # def add_subtask(self, task_name, deadline=None, deadline_changes = {}, subtasks = [], complete=False):
+    #     prev_task_id = self.subtasks[-1]['task_id']
+    #     new_task_id = Task.TASK_IDs[Task.TASK_IDs.find(prev_task_id) + 1]
+    #     self.subtasks.append(
+    #         Task(
+    #             task_id = new_task_id,
+    #             task_name = task_name,
+    #             deadline=deadline,
+    #             deadline_changes=deadline_changes,
+    #             subtasks=subtasks,
+    #             complete=complete
+    #         )
+    #     )
 
     def filter_by_id(self, task_id):
 
@@ -85,6 +94,45 @@ class Task:
             task_list = task.subtasks
 
         return task
+
+    def filter(self,callback):
+
+        # base case: no subtasks
+        if not self.subtasks:
+            if callback(self):
+                return Task(
+                    task_id = self.task_id,
+                    task_name = self.name,
+                    deadline = self.deadline,
+                    deadline_changes = self.deadline_changes,
+                    # subtasks=
+                    complete= self.complete
+                )
+            else:
+                return None
+
+        # inductive step: if filtered subtasks exist, recurse
+        else:
+            # filter subtasks
+            fil_subtasks = []
+            for subtask in self.subtasks:
+                fil_subtask = subtask.filter(callback)
+                if fil_subtask:
+                    fil_subtasks.append(fil_subtask)
+
+            if not fil_subtasks:
+                return None
+            else:
+                return Task(
+                    task_id = self.task_id,
+                    task_name = self.name,
+                    deadline = self.deadline,
+                    deadline_changes = self.deadline_changes,
+                    subtasks = fil_subtasks,
+                    complete= self.complete
+                )
+
+
 
 
 
@@ -110,11 +158,11 @@ class Task:
             # deferment_date    task_name   from    to  category    justification
 
 # TODO: implement function to filter deferments by category
-with open('todo.json', "r") as read_file:
-    t = Task(task_id='',
-        task_name='root',
-        subtasks= json.load(read_file))
 
+t = Task.from_json('todo.json')
 # print(t)
-print(t.filter_by_id('0').to_string())
+# print(t.filter_by_id('0'))
+print(t.filter(lambda x: x.name.startswith('sec'))) # filter by task name
+print(t.filter(lambda x: x.deadline <= '2021-04-03')) #filter by deadline
+
 # print(t)
