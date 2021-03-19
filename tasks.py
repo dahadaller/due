@@ -1,4 +1,6 @@
 import json
+import argparse
+from datetime import datetime
 
 class Task:
     """docstring"""
@@ -91,15 +93,23 @@ class Task:
             output = self.to_string()
         return output
 
-    def filter_by_id(self, task_id):
+    def print(self):
+        print(self)
+
+    def get_subtask(self, subtask_id):
 
         task_list = self.subtasks
+        digits_so_far = []
 
-        for i, id in enumerate(task_id.split('.')):
-            filtered = list(filter(lambda x: x.id == id, task_list))
-            assert filtered, 'No task at index [{i}] of task id [{task_id}] Check that your task id is correct.'.format(i=i,task_id=task_id)
+        for id_digit in subtask_id.split('.'):
+            filtered = list(filter(lambda x: x.id == id_digit, task_list))
+            if not filtered:
+                # TODO: maybe this print statement shold be a part of the parser
+                print('No subtasks under task {digits_so_far} Check that your input,  {subtask_id}, is correct.'.format(digits_so_far='.'.join(digits_so_far), subtask_id=subtask_id))
+                return
             task = filtered[0]
             task_list = task.subtasks
+            digits_so_far.append(id_digit)
 
         return task
 
@@ -156,6 +166,48 @@ class Task:
             subtask.id = 0
         self.subtasks.append(subtask)
         return self
+
+if __name__ == '__main__':
+    #
+    # # import from json file
+    # t = Task.from_json_file('todo.json')
+    # # add task
+    # g = Task(
+    #     task_name =  'do thejsnflkiogndlkjfnglsjkdfgnlkj thing',
+    #     deadline  = '2021-03-18'
+    # )
+    # # filter and add subtask
+    # t.filter_by_id('0.1').add_subtask(g)
+    # # print(t.filter(lambda x: x.name.startswith('sec'))) # filter by task name
+    # # print(t.filter(lambda x: x.deadline <= '2021-04-03')) #filter by deadline
+    #
+    # # write changes to file
+    # t.to_json_file('todo_2.json')
+    #
+    # # load from file once again
+    # l = Task.from_json_file('todo_2.json')
+    # print(l)
+
+    # due
+    due = argparse.ArgumentParser(prog='due')
+    subcommands = due.add_subparsers()
+
+    # due today
+    today = subcommands.add_parser('today', aliases=['td'])
+    t = Task.from_json_file('todo.json')
+    print(datetime.today().strftime('%Y-%m-%d'))
+    print(t)
+    # print(t.filter(lambda x: x.deadline == datetime.today().strftime('%Y-%m-%d')))
+    print(t.get_subtask('0.0.0.1'))
+
+
+    # due tomorrow
+    today = subcommands.add_parser('tomorrow', aliases=['tm'])
+
+    # due week
+    parser_b = subcommands.add_parser('week', aliases=['we','w'])
+
+
 # ---
 
 # - argparse help menu setup
@@ -233,22 +285,3 @@ class Task:
     # how to dump json to file: https://stackoverflow.com/a/12309296/7215135
     # how to make a second constructor as I did with Task.from_json_file() and Task.from_dict(): https://www.geeksforgeeks.org/what-is-a-clean-pythonic-way-to-have-multiple-constructors-in-python/
     #
-if __name__ = '__main__':
-
-    # import from json file
-    t = Task.from_json_file('todo.json')
-    # add task
-    g = Task(
-        task_name =  'do thejsnflkiogndlkjfnglsjkdfgnlkj thing',
-        deadline  = '2021-03-18'
-    )
-    # filter and add subtask
-    t.filter_by_id('0.1').add_subtask(g)
-    # print(t.filter(lambda x: x.name.startswith('sec'))) # filter by task name
-    # print(t.filter(lambda x: x.deadline <= '2021-04-03')) #filter by deadline
-
-    # write changes to file
-    t.to_json_file('todo_2.json')
-
-    # load from file once again
-    l = Task.from_json_file('todo_2.json')
