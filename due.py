@@ -129,7 +129,9 @@ class Task:
             else:
                 return None
 
-        # inductive step: if filtered subtasks exist, recurse
+        # inductive step: check filtered subtasks.
+        # if subtasks match filter, recurse.
+        # otherwise return whether parent task matches filter.
         else:
             # filter subtasks
             fil_subtasks = []
@@ -139,14 +141,25 @@ class Task:
                     fil_subtasks.append(fil_subtask)
 
             if not fil_subtasks:
-                return None
+                if callback(self):
+                    return Task(
+                        task_id = self.id,
+                        task_name = self.name,
+                        deadline = self.deadline,
+                        deadline_changes = self.deadline_changes,
+                        # subtasks=
+                        complete= self.complete
+                    )
+                else:
+                    return None
+
             else:
                 return Task(
                     task_id = self.id,
                     task_name = self.name,
                     deadline = self.deadline,
                     deadline_changes = self.deadline_changes,
-                    subtasks = fil_subtasks,
+                    subtasks = fil_subtasks, #recurse
                     complete= self.complete
                 )
 
@@ -177,7 +190,6 @@ if __name__ == '__main__':
     #     deadline  = '2021-03-18'
     # )
     # # filter and add subtask
-    # t.filter_by_id('0.1').add_subtask(g)
     # # print(t.filter(lambda x: x.name.startswith('sec'))) # filter by task name
     # # print(t.filter(lambda x: x.deadline <= '2021-04-03')) #filter by deadline
     #
@@ -196,10 +208,11 @@ if __name__ == '__main__':
     today = subcommands.add_parser('today', aliases=['td'])
     t = Task.from_json_file('todo.json')
     print(datetime.today().strftime('%Y-%m-%d'))
+    print('---')
     print(t)
     # print(t.filter(lambda x: x.deadline == datetime.today().strftime('%Y-%m-%d')))
-    print(t.get_subtask('0.0.0.1'))
-
+    print('---')
+    print(t.filter(lambda x: x.complete == False))
 
     # due tomorrow
     today = subcommands.add_parser('tomorrow', aliases=['tm'])
@@ -284,4 +297,4 @@ if __name__ == '__main__':
     # how to load json data from and dump data to json files
     # how to dump json to file: https://stackoverflow.com/a/12309296/7215135
     # how to make a second constructor as I did with Task.from_json_file() and Task.from_dict(): https://www.geeksforgeeks.org/what-is-a-clean-pythonic-way-to-have-multiple-constructors-in-python/
-    #
+    # how you get today's date from datetime:     datetime.today().strftime('%Y-%m-%d')
