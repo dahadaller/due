@@ -280,10 +280,6 @@ if __name__ == '__main__':
 
 
     t = Task.from_json_file('todo.json')
-
-    print('↓date↓')
-    print(datetime.today().strftime('%Y-%m-%d'))
-
     print('↓print↓')
     print(t)
 
@@ -291,31 +287,61 @@ if __name__ == '__main__':
     print('↓search↓')
     print(t.search(lambda x: x.complete == True))
 
-    print('↓print↓')
-    print(t)
-
     print('↓promote↓')
-    # TODO: Fix the promote() method so that it displays the milestone task as well as the promoted tasks. may have to use a wrapper function.
     for s1 in t.subtasks:
         for s2 in s1.promote(lambda x: x.deadline <= '2021-03-18'):
             print(s2)
-    # l2 = [s.promote(lambda x: x.deadline <= '2021-03-18') for s in milestone.subtasks]
 
-    print('↓print↓')
-    print(t)
+    print('↓dates↓')
+    today = datetime.today()
+    sun = today - timedelta(days=(today.weekday()+1))
+    sat = today + timedelta((calendar.SATURDAY-today.weekday()) % 7 )
 
-    today = datetime.today() #reference point.
-    saturday = today + timedelta((calendar.SATURDAY-today.weekday()) % 7 )
-    today, week = today.strftime('%Y-%m-%d'), saturday.strftime('%Y-%m-%d')
+    today_deadline = today.strftime('%Y-%m-%d')
+    week_begin = sun.strftime('%Y-%m-%d')
+    week_deadline = sat.strftime('%Y-%m-%d')
+    week_num = sat.strftime('%W') # note that week starts with monday in python, so technically each of my weeks starts with last weeks sunday. So using saturday as measure of the week.
+    print(week_begin,today_deadline, week_deadline, week_num)
+    print('')
 
     print('↓due_by(today)↓')
-    print(t.due_by('2021-03-18').search(lambda task: not task.complete))
+    print(t.due_by(today_deadline).search(lambda task: not task.complete))
 
     print('↓due_by(week)↓')
-    print(t.due_by(week))
+    print(t.due_by(week_deadline))
 
     print('↓print↓')
     print(t)
+
+    '↓highlight and print calendars↓'
+
+    c = calendar.TextCalendar(calendar.SUNDAY)
+    l = c.formatmonth(today.year, today.month)
+
+    def highlight(cal_str, begin_date, end_date):
+
+        cal_list = list(cal_str)
+
+        highlight_text = u"\u001b[7m" # ansi code for "reversed" (highlighted) text
+        reset = u"\u001b[0m" #reset ansi to default
+
+        begin = begin_date.strftime('%d')
+        end = end_date.strftime('%d')
+
+        begin_idx = cal_str.rfind(begin)
+        end_idx = cal_str.rfind(end) + 1 + len(begin)
+
+        cal_list.insert(begin_idx,highlight_text)
+        cal_list.insert(end_idx,reset)
+
+        return ''.join(cal_list)
+
+    print('↓week calendar↓')
+    print(highlight(l,sun,sat))
+
+    print('↓day calendar↓')
+    print(highlight(l,today,today))
+    # print(reversed_text,l,reset)
 
 # ---
 
@@ -384,6 +410,8 @@ if __name__ == '__main__':
 
 # TODO: implement function to filter deferments by category
 
+# TODO: put type hints in all functions
+
 # Flashcards to make:
     # using str.format() https://realpython.com/python-string-formatting/#2-new-style-string-formatting-strformat
     # the difference between __str__ and __rep__ https://realpython.com/python-print/#printing-custom-data-types
@@ -395,3 +423,4 @@ if __name__ == '__main__':
     # how to make a second constructor as I did with Task.from_json_file() and Task.from_dict(): https://www.geeksforgeeks.org/what-is-a-clean-pythonic-way-to-have-multiple-constructors-in-python/
     # how you get today's date from datetime:     datetime.today().strftime('%Y-%m-%d')
     # how to flatten a list in python: flattened_l = [item for sublist in l for item in sublist]
+    # read the following articles and make flashcards: https://pymotw.com/3/datetime/index.html  https://pymotw.com/3/time/index.html
