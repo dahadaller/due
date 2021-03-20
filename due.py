@@ -25,9 +25,7 @@ class Task:
                         deadline = subtask['deadline'],
                         deadline_changes = subtask['deadline_changes'],
                         subtasks = subtask['subtasks'],
-                        complete = subtask['complete']
-                    )
-                )
+                        complete = subtask['complete']))
         # if subtasks is empty or is an array of Task objects
         else:
             self.subtasks = subtasks
@@ -40,16 +38,14 @@ class Task:
             deadline = task_dict.get('deadline',None),
             complete = task_dict.get('complete',False),
             deadline_changes = task_dict.get('deadline_changes',{}),
-            subtasks = task_dict.get('subtasks',[]),
-        )
+            subtasks = task_dict.get('subtasks',[]))
 
     @staticmethod
     def from_json_file(file_path):
         with open(file_path, "r") as read_file:
             return Task(
                 task_name='root',
-                subtasks= json.load(read_file)
-            )
+                subtasks= json.load(read_file))
 
     def to_dict(self):
         return {
@@ -58,8 +54,7 @@ class Task:
             'deadline': self.deadline,
             'deadline_changes': self.deadline_changes,
             'complete':self.complete,
-            'subtasks':  [s.to_dict() for s in self.subtasks]
-        }
+            'subtasks':  [s.to_dict() for s in self.subtasks]}
 
     def to_json_file(self, file_path):
         with open(file_path,'w') as write_file:
@@ -82,8 +77,7 @@ class Task:
             task_name =  self.name,
             complete = checkbox,
             deadline = self.deadline,
-            subtasks = subtasks
-        )
+            subtasks = subtasks)
         return output
 
     def __str__(self):
@@ -93,25 +87,6 @@ class Task:
             output = self.to_string()
         return output
 
-    def print(self):
-        print(self)
-
-    def get_subtask(self, subtask_id):
-
-        task_list = self.subtasks
-        digits_so_far = []
-
-        for id_digit in subtask_id.split('.'):
-            filtered = list(filter(lambda x: x.id == id_digit, task_list))
-            if not filtered:
-                # TODO: maybe this print statement shold be a part of the parser
-                print('No subtasks under task {digits_so_far} Check that your input,  {subtask_id}, is correct.'.format(digits_so_far='.'.join(digits_so_far), subtask_id=subtask_id))
-                return
-            task = filtered[0]
-            task_list = task.subtasks
-            digits_so_far.append(id_digit)
-
-        return task
 
     def filter(self,callback):
 
@@ -124,23 +99,27 @@ class Task:
                     deadline = self.deadline,
                     deadline_changes = self.deadline_changes,
                     # subtasks=
-                    complete= self.complete
-                )
+                    complete= self.complete)
             else:
                 return None
 
-        # inductive step: check filtered subtasks.
-        # if subtasks match filter, recurse.
-        # otherwise return whether parent task matches filter.
+        # inductive step: check filtered subtasks postorder dfs (children, root)
         else:
-            # filter subtasks
-            fil_subtasks = []
-            for subtask in self.subtasks:
-                fil_subtask = subtask.filter(callback)
-                if fil_subtask:
-                    fil_subtasks.append(fil_subtask)
+            # filter subtasks (recurse on children)
+            fil_subtasks = [s.filter(callback) for s in self.subtasks]
+            fil_subtasks = [s for s in fil_subtasks if s is not None]
 
-            if not fil_subtasks:
+            # if parent's subtasks match filter, keep parent.
+            if fil_subtasks:
+                return Task(
+                    task_id = self.id,
+                    task_name = self.name,
+                    deadline = self.deadline,
+                    deadline_changes = self.deadline_changes,
+                    subtasks = fil_subtasks,
+                    complete= self.complete)
+            # if parent itself matches filter, keep parent
+            else:
                 if callback(self):
                     return Task(
                         task_id = self.id,
@@ -148,20 +127,63 @@ class Task:
                         deadline = self.deadline,
                         deadline_changes = self.deadline_changes,
                         # subtasks=
-                        complete= self.complete
-                    )
+                        complete= self.complete)
+                # otherwise don't keep
                 else:
                     return None
 
-            else:
-                return Task(
+
+    def promote(self,callback):
+        print(self.subtasks != [], self.deadline <= '2021-03-18',self.to_string(max_depth=0)) # TODO
+
+        # base case: no subtasks
+        if not self.subtasks:
+            if callback(self):
+                return tuple([Task(
                     task_id = self.id,
                     task_name = self.name,
                     deadline = self.deadline,
                     deadline_changes = self.deadline_changes,
-                    subtasks = fil_subtasks, #recurse
-                    complete= self.complete
-                )
+                    # subtasks=
+                    complete= self.complete)])
+            else:
+                return tuple()
+
+        # inductive step: check if subtasks should be promoted postorder dfs (children, then root)
+        else:
+
+            # if parent matches, keep parent along with all children
+            if callback(self):
+                print('running')
+                return tuple([Task(
+                    task_id = self.id,
+                    task_name = self.name,
+                    deadline = self.deadline,
+                    deadline_changes = self.deadline_changes,
+                    subtasks = self.subtasks,
+                    complete= self.complete)])
+
+            # if parent doesn't match, promote children in it's place
+            else:
+
+                # promte subtasks (recurse on children)
+                promoted_subtasks = [s.promote(callback) for s in self.subtasks]
+                promoted_subtasks = [item for sublist in promoted_subtasks for item in sublist] #flatten
+                promoted_subtasks = [ps for ps in promoted_subtasks if ps is not None] # remove None values
+                # [print(t) for t in promoted_subtasks]
+
+                ret = []
+                print([s.name for s in promoted_subtasks])
+                for subtask in promoted_subtasks:
+                    ret.append(Task(
+                        task_id = subtask.id,
+                        task_name = subtask.name,
+                        deadline = subtask.deadline,
+                        deadline_changes = subtask.deadline_changes,
+                        subtasks = subtask.subtasks,
+                        complete= subtask.complete))
+                return tuple(ret)
+
 
 
     def next_id(self):
@@ -179,6 +201,23 @@ class Task:
             subtask.id = 0
         self.subtasks.append(subtask)
         return self
+
+    def get_subtask(self, subtask_id):
+
+        task_list = self.subtasks
+        digits_so_far = []
+
+        for id_digit in subtask_id.split('.'):
+            filtered = list(filter(lambda x: x.id == id_digit, task_list))
+            if not filtered:
+                # TODO: maybe this print statement shold be a part of the parser
+                print('No subtasks under task {digits_so_far} Check that your input,  {subtask_id}, is correct.'.format(digits_so_far='.'.join(digits_so_far), subtask_id=subtask_id))
+                return
+            task = filtered[0]
+            task_list = task.subtasks
+            digits_so_far.append(id_digit)
+
+        return task
 
 if __name__ == '__main__':
     #
@@ -206,13 +245,6 @@ if __name__ == '__main__':
 
     # due today
     today = subcommands.add_parser('today', aliases=['td'])
-    t = Task.from_json_file('todo.json')
-    print(datetime.today().strftime('%Y-%m-%d'))
-    print('---')
-    print(t)
-    # print(t.filter(lambda x: x.deadline == datetime.today().strftime('%Y-%m-%d')))
-    print('---')
-    print(t.filter(lambda x: x.complete == False))
 
     # due tomorrow
     today = subcommands.add_parser('tomorrow', aliases=['tm'])
@@ -220,6 +252,24 @@ if __name__ == '__main__':
     # due week
     parser_b = subcommands.add_parser('week', aliases=['we','w'])
 
+
+
+    t = Task.from_json_file('todo.json')
+    print(datetime.today().strftime('%Y-%m-%d'))
+    print('↓print↓')
+    print(t)
+    # print(t.filter(lambda x: x.deadline == datetime.today().strftime('%Y-%m-%d')))
+    print('↓filter↓')
+    print(t.filter(lambda x: x.complete == True))
+
+    print('↓promote↓')
+    # TODO: Fix the promote() method so that it displays the milestone task as well as the promoted tasks. may have to use a wrapper function.
+    l1 = []
+    for milestone in t.subtasks:
+        l2 = milestone.promote(lambda x: x.deadline <= '2021-03-18')
+        l1 = l1 + list(l2)
+    [print(m) for m in l1]
+    # [print(i) for i in l]
 
 # ---
 
@@ -292,9 +342,10 @@ if __name__ == '__main__':
     # using str.format() https://realpython.com/python-string-formatting/#2-new-style-string-formatting-strformat
     # the difference between __str__ and __rep__ https://realpython.com/python-print/#printing-custom-data-types
     # difference between static, class, and other method decorators in python classes https://realpython.com/instance-class-and-static-methods-demystified/
-    # how to use if-else conditionals in list comprehension: https://stackoverflow.com/questions/4406389/if-else-in-a-list-comprehension
+    # how to use if-else conditionals in list comprehension: fil_subtasks = [s for s in fil_subtasks if s is not None]  https://stackoverflow.com/questions/4406389/if-else-in-a-list-comprehension
     # difference between json.loads() and json.load(): https://stackoverflow.com/questions/39719689/what-is-the-difference-between-json-load-and-json-loads-functions
     # how to load json data from and dump data to json files
     # how to dump json to file: https://stackoverflow.com/a/12309296/7215135
     # how to make a second constructor as I did with Task.from_json_file() and Task.from_dict(): https://www.geeksforgeeks.org/what-is-a-clean-pythonic-way-to-have-multiple-constructors-in-python/
     # how you get today's date from datetime:     datetime.today().strftime('%Y-%m-%d')
+    # how to flatten a list in python: flattened_l = [item for sublist in l for item in sublist]
