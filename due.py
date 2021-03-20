@@ -1,6 +1,7 @@
 import json
 import argparse
 from datetime import datetime
+from itertools import chain
 
 class Task:
     """docstring"""
@@ -87,8 +88,7 @@ class Task:
             output = self.to_string()
         return output
 
-
-    def filter(self,callback):
+    def search(self,callback):
 
         # base case: no subtasks
         if not self.subtasks:
@@ -106,7 +106,7 @@ class Task:
         # inductive step: check filtered subtasks postorder dfs (children, root)
         else:
             # filter subtasks (recurse on children)
-            fil_subtasks = [s.filter(callback) for s in self.subtasks]
+            fil_subtasks = [s.search(callback) for s in self.subtasks]
             fil_subtasks = [s for s in fil_subtasks if s is not None]
 
             # if parent's subtasks match filter, keep parent.
@@ -132,9 +132,7 @@ class Task:
                 else:
                     return None
 
-
     def promote(self,callback):
-        print(self.subtasks != [], self.deadline <= '2021-03-18',self.to_string(max_depth=0)) # TODO
 
         # base case: no subtasks
         if not self.subtasks:
@@ -154,7 +152,6 @@ class Task:
 
             # if parent matches, keep parent along with all children
             if callback(self):
-                print('running')
                 return tuple([Task(
                     task_id = self.id,
                     task_name = self.name,
@@ -168,12 +165,12 @@ class Task:
 
                 # promte subtasks (recurse on children)
                 promoted_subtasks = [s.promote(callback) for s in self.subtasks]
-                promoted_subtasks = [item for sublist in promoted_subtasks for item in sublist] #flatten
+                promoted_subtasks = list(chain(*promoted_subtasks)) # flatten list
+                # promoted_subtasks = [item for sublist in promoted_subtasks for item in sublist] #flatten
                 promoted_subtasks = [ps for ps in promoted_subtasks if ps is not None] # remove None values
                 # [print(t) for t in promoted_subtasks]
 
                 ret = []
-                print([s.name for s in promoted_subtasks])
                 for subtask in promoted_subtasks:
                     ret.append(Task(
                         task_id = subtask.id,
@@ -184,7 +181,34 @@ class Task:
                         complete= subtask.complete))
                 return tuple(ret)
 
+    def due_by(self, deadline):
+        # display method to be run on the root task only
+        root_copy = Task(
+            task_id = self.id,
+            task_name = self.name,
+            deadline = self.deadline,
+            deadline_changes = self.deadline_changes,
+            subtasks= [],
+            complete= self.complete)
 
+        for milestone in self.subtasks:
+
+            milestone_copy = Task(
+                task_id = milestone.id,
+                task_name = milestone.name,
+                deadline = milestone.deadline,
+                deadline_changes = milestone.deadline_changes,
+                subtasks = [],
+                complete = milestone.complete)
+
+            for subtask in milestone.subtasks:
+                promoted = subtask.promote(lambda x: x.deadline <= deadline)
+                for p in promoted:
+                    milestone_copy.subtasks.append(p)
+
+            root_copy.subtasks.append(milestone_copy)
+
+        return root_copy
 
     def next_id(self):
         id = self.id
@@ -255,21 +279,35 @@ if __name__ == '__main__':
 
 
     t = Task.from_json_file('todo.json')
+
+    print('↓date↓')
     print(datetime.today().strftime('%Y-%m-%d'))
+
     print('↓print↓')
     print(t)
+
     # print(t.filter(lambda x: x.deadline == datetime.today().strftime('%Y-%m-%d')))
-    print('↓filter↓')
-    print(t.filter(lambda x: x.complete == True))
+    print('↓search↓')
+    print(t.search(lambda x: x.complete == True))
+
+    print('↓print↓')
+    print(t)
 
     print('↓promote↓')
     # TODO: Fix the promote() method so that it displays the milestone task as well as the promoted tasks. may have to use a wrapper function.
-    l1 = []
-    for milestone in t.subtasks:
-        l2 = milestone.promote(lambda x: x.deadline <= '2021-03-18')
-        l1 = l1 + list(l2)
-    [print(m) for m in l1]
-    # [print(i) for i in l]
+    for s1 in t.subtasks:
+        for s2 in s1.promote(lambda x: x.deadline <= '2021-03-18'):
+            print(s2)
+    # l2 = [s.promote(lambda x: x.deadline <= '2021-03-18') for s in milestone.subtasks]
+
+    print('↓print↓')
+    print(t)
+
+    print('↓due_by↓')
+    print(t.due_by('2021-03-18'))
+
+    print('↓print↓')
+    print(t)
 
 # ---
 
