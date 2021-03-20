@@ -1,6 +1,7 @@
 import json
 import argparse
-from datetime import datetime
+from datetime import datetime, date, timedelta
+import calendar
 from itertools import chain
 
 class Task:
@@ -303,8 +304,15 @@ if __name__ == '__main__':
     print('↓print↓')
     print(t)
 
-    print('↓due_by↓')
-    print(t.due_by('2021-03-18'))
+    today = datetime.today() #reference point.
+    saturday = today + timedelta((calendar.SATURDAY-today.weekday()) % 7 )
+    today, week = today.strftime('%Y-%m-%d'), saturday.strftime('%Y-%m-%d')
+
+    print('↓due_by(today)↓')
+    print(t.due_by('2021-03-18').search(lambda task: not task.complete))
+
+    print('↓due_by(week)↓')
+    print(t.due_by(week))
 
     print('↓print↓')
     print(t)
