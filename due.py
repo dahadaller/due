@@ -1,7 +1,8 @@
 import json
 import argparse
-from datetime import datetime, date, timedelta
 import calendar
+
+from datetime import datetime, date, timedelta
 from itertools import chain
 
 class Task:
@@ -244,48 +245,17 @@ class Task:
 
         return task
 
-if __name__ == '__main__':
-    #
-    # t = Task.from_json_file('todo.json')
-    # print('↓print↓')
-    # print(t)
-    #
-    # # print(t.filter(lambda x: x.deadline == datetime.today().strftime('%Y-%m-%d')))
-    # print('↓search↓')
-    # print(t.search(lambda x: x.complete == True))
-    #
-    # print('↓promote↓')
-    # for s1 in t.subtasks:
-    #     for s2 in s1.promote(lambda x: x.deadline <= '2021-03-18'):
-    #         print(s2)
-    #
-    # print('↓dates↓')
-    # today = datetime.today()
-    # sun = today - timedelta(days=(today.weekday()+1))
-    # sat = today + timedelta((calendar.SATURDAY-today.weekday()) % 7 )
-    #
-    # today_deadline = today.strftime('%Y-%m-%d')
-    # week_begin = sun.strftime('%Y-%m-%d')
-    # week_deadline = sat.strftime('%Y-%m-%d')
-    # week_num = sat.strftime('%W') # note that week starts with monday in python, so technically each of my weeks starts with last weeks sunday. So using saturday as measure of the week.
-    # print(week_begin,today_deadline, week_deadline, week_num)
-    # print('')
-    #
-    # print('↓due_by(today)↓')
-    # print(t.due_by(today_deadline).search(lambda task: not task.complete))
-    #
-    # print('↓due_by(week)↓')
-    # print(t.due_by(week_deadline))
-    #
-    # print('↓print↓')
-    # print(t)
-    #
-    # '↓highlight and print calendars↓'
-    #
-    # c = calendar.TextCalendar(calendar.SUNDAY)
-    # l = c.formatmonth(today.year, today.month)
+class Main:
+    today = datetime.today()
 
-    def highlight(cal_str, begin_date, end_date):
+    cal_str = calendar.TextCalendar(calendar.SUNDAY).formatmonth(today.year, today.month)
+    task_tree = Task.from_json_file('todo.json') # TODO:  how can I change this to another file if i need to? or even another file type?
+
+    week_begin = today - timedelta(days=(today.weekday()+1)) #week begins on sunday
+    week_end = today + timedelta((calendar.SATURDAY-today.weekday()) % 7 ) # week ends on saturday
+
+    @staticmethod
+    def highlight_dates(cal_str, begin_date, end_date):
 
         cal_list = list(cal_str)
 
@@ -302,30 +272,32 @@ if __name__ == '__main__':
         cal_list.insert(end_idx,reset)
 
         return ''.join(cal_list)
-    #
-    # print('↓week calendar↓')
-    # print(highlight(l,sun,sat))
-    #
-    # print('↓day calendar↓')
-    # print(highlight(l,today,today))
-    # # print(reversed_text,l,reset)
-    #
 
-    def today_display(*args):
-        t = Task.from_json_file('todo.json')
+    @classmethod
+    def display_today(*args):
+        cal_str, today, task_tree, highlight_dates = Main.cal_str, Main.today, Main.task_tree, Main.highlight_dates
+        print(highlight_dates(cal_str, today, today))
+        print(task_tree
+            .due_by(today.strftime('%Y-%m-%d'))
+            .search(lambda task: not task.complete))
+
+    @classmethod
+    def display_tomorrow(*args):
+        cal_str, today, task_tree, highlight_dates = Main.cal_str, Main.today, Main.task_tree, Main.highlight_dates
+        tomorrow = today + timedelta(days=1)
+        print(highlight_dates(cal_str, tomorrow, tomorrow))
+        print(task_tree
+            .due_by(tomorrow.strftime('%Y-%m-%d'))
+            .search(lambda task: not task.complete))
+
+    @classmethod
+    def display_week(*args):
+        cal_str, task_tree, week_begin, week_end, highlight_dates = Main.cal_str, Main.task_tree, Main.week_begin, Main.week_end, Main.highlight_dates
+        print(highlight_dates(cal_str,week_begin,week_end))
+        print(task_tree.due_by(week_end.strftime('%Y-%m-%d')))
 
 
-        today = datetime.today()
-        today_deadline = today.strftime('%Y-%m-%d')
-        
-        c = calendar.TextCalendar(calendar.SUNDAY)
-        l = c.formatmonth(today.year, today.month)
-
-        print(highlight(l,today,today))
-        print(t.due_by(today_deadline).search(lambda task: not task.complete))
-
-
-# ---
+if __name__ == '__main__':
 
     # due
     due = argparse.ArgumentParser(prog='due')
@@ -333,16 +305,19 @@ if __name__ == '__main__':
 
     # due today
     today = subcommands.add_parser('today', aliases=['td'])
-    today.set_defaults(func=today_display)
-    args = due.parse_args('today'.split())
-    args.func(args)
-
+    today.set_defaults(func=Main.display_today)
 
     # due tomorrow
-    today = subcommands.add_parser('tomorrow', aliases=['tm'])
+    tomorrow = subcommands.add_parser('tomorrow', aliases=['tm'])
+    tomorrow.set_defaults(func=Main.display_tomorrow)
 
     # due week
-    parser_b = subcommands.add_parser('week', aliases=['we','w'])
+    week = subcommands.add_parser('week', aliases=['we','w'])
+    week.set_defaults(func=Main.display_week)
+
+    # parse arguments and run
+    args = due.parse_args()
+    args.func()
 
 # ---
 
@@ -425,3 +400,14 @@ if __name__ == '__main__':
     # how you get today's date from datetime:     datetime.today().strftime('%Y-%m-%d')
     # how to flatten a list in python: flattened_l = [item for sublist in l for item in sublist]
     # read the following articles and make flashcards: https://pymotw.com/3/datetime/index.html  https://pymotw.com/3/time/index.html
+
+# Examples for documentation
+    # # print(t.filter(lambda x: x.deadline == datetime.today().strftime('%Y-%m-%d')))
+    # print('↓search↓')
+    # print(t.search(lambda x: x.complete == True))
+    #
+    # print('↓promote↓')
+    # for s1 in t.subtasks:
+    #     for s2 in s1.promote(lambda x: x.deadline <= '2021-03-18'):
+    #         print(s2)
+    #
