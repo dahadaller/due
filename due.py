@@ -319,18 +319,10 @@ if __name__ == '__main__':
     args = due.parse_args()
     args.func()
 
+# TODO
 # ---
 
-# - argparse help menu setup
-
-# - due today / due td
-# - due tomorrow / due tm
-
-# - due week (due this week) show  the week number, this week's date range, and all tasks due for the week
-    # - due week +1 (due next week)
-    # - due week -1 (due last week)
-    # - due week 3 (due 3rd week of year)
-
+# the following functions should modify the source json file in addition to the task objects
 # - due add --id 1.0 'task name' 'deadline'
 # - due add --id 1.0 'task name' 'deadline' --repeat 'weekly:smtwtfs' --until 'date'
 #     - --repeat daily
@@ -357,6 +349,13 @@ if __name__ == '__main__':
 # - due backup --yaml 'filename.yaml'
 # - due backup --json 'filename.json'
 
+#  figure out how to set the default file to search for to make the root task/task tree.
+# - argparse help menu setup
+
+# - due week +1 (due next week)
+# - due week -1 (due last week)
+# - due week 3 (due 3rd week of year)
+
 # * extra feature: use tree structure for tasks like this: https://stackoverflow.com/a/59109706/7215135
 # ├── package
 # │   ├── __init__.py
@@ -371,6 +370,9 @@ if __name__ == '__main__':
 # │       └── module2.py
 # └── package2
 #     └── __init__.py
+
+# * extra feature: add week number loading bar to the today, week, tomorrow display functions.
+# * extra feature: add loading bar for specific milestones to show how close until deadline
 
 # * extra feature: you could add a utility to gather # TODO's from code with
     # lines of text, filenames, and project names which could be added to your milestone tasks
@@ -411,3 +413,10 @@ if __name__ == '__main__':
     #     for s2 in s1.promote(lambda x: x.deadline <= '2021-03-18'):
     #         print(s2)
     #
+
+
+# DONE
+# ---
+# - due today / due td
+# - due tomorrow / due tm
+# - due week (due this week) show  the week number, this week's date range, and all tasks due for the week
