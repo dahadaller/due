@@ -246,77 +246,44 @@ class Task:
 
 if __name__ == '__main__':
     #
-    # # import from json file
     # t = Task.from_json_file('todo.json')
-    # # add task
-    # g = Task(
-    #     task_name =  'do thejsnflkiogndlkjfnglsjkdfgnlkj thing',
-    #     deadline  = '2021-03-18'
-    # )
-    # # filter and add subtask
-    # # print(t.filter(lambda x: x.name.startswith('sec'))) # filter by task name
-    # # print(t.filter(lambda x: x.deadline <= '2021-04-03')) #filter by deadline
+    # print('↓print↓')
+    # print(t)
     #
-    # # write changes to file
-    # t.to_json_file('todo_2.json')
+    # # print(t.filter(lambda x: x.deadline == datetime.today().strftime('%Y-%m-%d')))
+    # print('↓search↓')
+    # print(t.search(lambda x: x.complete == True))
     #
-    # # load from file once again
-    # l = Task.from_json_file('todo_2.json')
-    # print(l)
-
-    # due
-    due = argparse.ArgumentParser(prog='due')
-    subcommands = due.add_subparsers()
-
-    # due today
-    today = subcommands.add_parser('today', aliases=['td'])
-
-    # due tomorrow
-    today = subcommands.add_parser('tomorrow', aliases=['tm'])
-
-    # due week
-    parser_b = subcommands.add_parser('week', aliases=['we','w'])
-
-
-
-    t = Task.from_json_file('todo.json')
-    print('↓print↓')
-    print(t)
-
-    # print(t.filter(lambda x: x.deadline == datetime.today().strftime('%Y-%m-%d')))
-    print('↓search↓')
-    print(t.search(lambda x: x.complete == True))
-
-    print('↓promote↓')
-    for s1 in t.subtasks:
-        for s2 in s1.promote(lambda x: x.deadline <= '2021-03-18'):
-            print(s2)
-
-    print('↓dates↓')
-    today = datetime.today()
-    sun = today - timedelta(days=(today.weekday()+1))
-    sat = today + timedelta((calendar.SATURDAY-today.weekday()) % 7 )
-
-    today_deadline = today.strftime('%Y-%m-%d')
-    week_begin = sun.strftime('%Y-%m-%d')
-    week_deadline = sat.strftime('%Y-%m-%d')
-    week_num = sat.strftime('%W') # note that week starts with monday in python, so technically each of my weeks starts with last weeks sunday. So using saturday as measure of the week.
-    print(week_begin,today_deadline, week_deadline, week_num)
-    print('')
-
-    print('↓due_by(today)↓')
-    print(t.due_by(today_deadline).search(lambda task: not task.complete))
-
-    print('↓due_by(week)↓')
-    print(t.due_by(week_deadline))
-
-    print('↓print↓')
-    print(t)
-
-    '↓highlight and print calendars↓'
-
-    c = calendar.TextCalendar(calendar.SUNDAY)
-    l = c.formatmonth(today.year, today.month)
+    # print('↓promote↓')
+    # for s1 in t.subtasks:
+    #     for s2 in s1.promote(lambda x: x.deadline <= '2021-03-18'):
+    #         print(s2)
+    #
+    # print('↓dates↓')
+    # today = datetime.today()
+    # sun = today - timedelta(days=(today.weekday()+1))
+    # sat = today + timedelta((calendar.SATURDAY-today.weekday()) % 7 )
+    #
+    # today_deadline = today.strftime('%Y-%m-%d')
+    # week_begin = sun.strftime('%Y-%m-%d')
+    # week_deadline = sat.strftime('%Y-%m-%d')
+    # week_num = sat.strftime('%W') # note that week starts with monday in python, so technically each of my weeks starts with last weeks sunday. So using saturday as measure of the week.
+    # print(week_begin,today_deadline, week_deadline, week_num)
+    # print('')
+    #
+    # print('↓due_by(today)↓')
+    # print(t.due_by(today_deadline).search(lambda task: not task.complete))
+    #
+    # print('↓due_by(week)↓')
+    # print(t.due_by(week_deadline))
+    #
+    # print('↓print↓')
+    # print(t)
+    #
+    # '↓highlight and print calendars↓'
+    #
+    # c = calendar.TextCalendar(calendar.SUNDAY)
+    # l = c.formatmonth(today.year, today.month)
 
     def highlight(cal_str, begin_date, end_date):
 
@@ -335,13 +302,47 @@ if __name__ == '__main__':
         cal_list.insert(end_idx,reset)
 
         return ''.join(cal_list)
+    #
+    # print('↓week calendar↓')
+    # print(highlight(l,sun,sat))
+    #
+    # print('↓day calendar↓')
+    # print(highlight(l,today,today))
+    # # print(reversed_text,l,reset)
+    #
 
-    print('↓week calendar↓')
-    print(highlight(l,sun,sat))
+    def today_display(*args):
+        t = Task.from_json_file('todo.json')
 
-    print('↓day calendar↓')
-    print(highlight(l,today,today))
-    # print(reversed_text,l,reset)
+
+        today = datetime.today()
+        today_deadline = today.strftime('%Y-%m-%d')
+        
+        c = calendar.TextCalendar(calendar.SUNDAY)
+        l = c.formatmonth(today.year, today.month)
+
+        print(highlight(l,today,today))
+        print(t.due_by(today_deadline).search(lambda task: not task.complete))
+
+
+# ---
+
+    # due
+    due = argparse.ArgumentParser(prog='due')
+    subcommands = due.add_subparsers()
+
+    # due today
+    today = subcommands.add_parser('today', aliases=['td'])
+    today.set_defaults(func=today_display)
+    args = due.parse_args('today'.split())
+    args.func(args)
+
+
+    # due tomorrow
+    today = subcommands.add_parser('tomorrow', aliases=['tm'])
+
+    # due week
+    parser_b = subcommands.add_parser('week', aliases=['we','w'])
 
 # ---
 
