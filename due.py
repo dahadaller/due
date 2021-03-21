@@ -6,10 +6,87 @@ from datetime import datetime, date, timedelta
 from itertools import chain
 
 class Task:
-    """docstring"""
+    """
+    A class that represents a Task. This is a recursive class, so subtasks
+    are also Task objects, and so we can form trees from Tasks. The root
+    task of such a tree is treated as a dummy node that allows us to traverse
+    the Tasks in the tree.
 
-    def __init__(self, task_name, task_id='root', deadline=None,complete=False, deadline_changes = {}, subtasks = []):
+    ...
 
+    Attributes
+    ----------
+    id : str
+        The id of a Task is a period-delimited numeric string (eg. "1.0.2.3")
+        that uniquely identifies a task. The id can be of variable length
+        and represents the position of the Task in the Task/Subtask heirarchy
+        tree. The root subtask has a task id of "root". For example, one
+        heirarchy looks like this: "root" > "1" > "1.0" > "1.0.2" > "1.0.2.3",
+        where ">" means "is parent task to" in this case. (default 'root')
+    name : str
+        The name of a Task desccribes what should be done to complete some
+        objective.
+    deadline : str
+        The deadline is a date in format date.strftime('%Y-%m-%d'),
+        eg. 2021-03-21. The deadline is a date by which the task should be
+        completed.(default  None)
+    complete : bool
+        The complete attribute indicates whether a task has been marked as
+        completed or not. Tasks where complete = True will show a checked box
+        in the CLI interface.(default  False)
+    deadline_changes:  dict
+        If deadlines are ever pushed back for a given task, that information is
+        recorded here. In this dictionary, the keys are date-strings with the
+        date.strftime('%Y-%m-%d') format, and the values are strings indicating
+        the reason that the task could not be completed on the key date.
+        (default  {})
+    subtasks: list
+        This is a list of child Tasks which should be completed before the
+        parent task can be marked as completed. (default [])
+
+    Methods
+    -------
+    says(sound=None)
+        Prints the animals name and what sound it makes
+    """
+
+    def __init__(self, task_name, task_id='root', deadline=None, complete=False, deadline_changes = {}, subtasks = []):
+
+        """
+        Creates an instance of a Task. Note that, if subtasks is a list of
+        dictionaries instead of a list of Task objects, __init__ will recurse
+        into the subtasks list and initialize Tasks from those dictionaries.
+
+        Parameters
+        ----------
+        task_name : str
+            The name of a Task desccribes what should be done to complete some
+            objective.
+        task_id : str, optional
+            The id of a Task is a period-delimited numeric string (eg. "1.0.2.3")
+            that uniquely identifies a task. The id can be of variable length
+            and represents the position of the Task in the Task/Subtask heirarchy
+            tree. The root subtask has a task id of "root". For example, one
+            heirarchy looks like this: "root" > "1" > "1.0" > "1.0.2" > "1.0.2.3",
+            where ">" means "is parent task to" in this case. (default 'root')
+        deadline : str, optional
+            The deadline is a date in format date.strftime('%Y-%m-%d'),
+            eg. 2021-03-21. The deadline is a date by which the task should be
+            completed.(default  None)
+        complete : bool, optional
+            The complete attribute indicates whether a task has been marked as
+            completed or not. Tasks where complete = True will show a checked box
+            in the CLI interface.(default  False)
+        deadline_changes:  dict, optional
+            If deadlines are ever pushed back for a given task, that information is
+            recorded here. In this dictionary, the keys are date-strings with the
+            date.strftime('%Y-%m-%d') format, and the values are strings indicating
+            the reason that the task could not be completed on the key date.
+            (default  {})
+        subtasks: list, optional
+            This is a list of child Tasks which should be completed before the
+            parent task can be marked as completed. (default [])
+        """
         self.id = task_id
         self.name = task_name
         self.deadline = deadline
@@ -35,6 +112,26 @@ class Task:
 
     @staticmethod
     def from_dict(task_dict):
+        """
+        Creates an instance of a Task from a dictionary. Note that, if there
+        exists a "subtasks" key in this dictionary with a value that is a
+        list of other dictionaries, this staticmethod will recurseively
+        create Task instances from those dictionaries as well.
+
+        Parameters
+        ----------
+        task_dict: dict
+            A dictionary that mirrors the structure of the Task object with keys
+            task_id, task_name, deadline, complete, deadline_changes, and subtasks.
+            All keys are optional. If a key and it's value aren't provided,
+            a default will be set. The defaults are listed below
+                task_id: 'root'
+                task_name: 'root'
+                deadline: None
+                complete: False
+                deadline_changes: {}
+                subtasks: []
+        """
         return Task(
             task_id = task_dict.get('task_id','root'),
             task_name = task_dict.get('task_name','root'),
@@ -45,12 +142,25 @@ class Task:
 
     @staticmethod
     def from_json_file(file_path):
+        """
+        Creates a root task, and then assigns all tasks in a json file
+        as subtasks to this root task.
+
+        Parameters
+        ----------
+        file_path: str
+            The file path where the json file is located.
+        """
         with open(file_path, "r") as read_file:
             return Task(
                 task_name='root',
                 subtasks= json.load(read_file))
 
     def to_dict(self):
+        """
+        Creates a dictionary from a Task object, and recurseively creates
+        dictionaries for any Task objects in the subtasks list.
+        """
         return {
             'task_id': self.id,
             'task_name': self.name,
@@ -60,6 +170,17 @@ class Task:
             'subtasks':  [s.to_dict() for s in self.subtasks]}
 
     def to_json_file(self, file_path):
+        """
+        Creates a JSON file from the subtasks of  a root Task object (id='root')
+
+        Raises
+        ------
+        AssertionError
+            If the task upon which this method is called is not a root task,
+            i.e. id=root.
+        """
+        assert self.id == 'root', "Can only export root task to JSON."
+
         with open(file_path,'w') as write_file:
             json.dump([s.to_dict() for s in self.subtasks], write_file, indent=4)
 
@@ -296,7 +417,20 @@ class Main:
         print(highlight_dates(cal_str,week_begin,week_end))
         print(task_tree.due_by(week_end.strftime('%Y-%m-%d')))
 
+    @classmethod
+    def add_task(*args):
+        task_tree = Main.task_tree
+        # arguments from command line:
+        id =
 
+        task_tree.get_subtask(id).add_subtask(
+            Task(
+
+            )
+        )
+
+
+        task_tree.
 if __name__ == '__main__':
 
     # due
@@ -314,6 +448,10 @@ if __name__ == '__main__':
     # due week
     week = subcommands.add_parser('week', aliases=['we','w'])
     week.set_defaults(func=Main.display_week)
+
+    # due add
+    add = subcommands.add_parser('add')
+    add.set_defaults(func=Main.add_task)
 
     # parse arguments and run
     args = due.parse_args()
