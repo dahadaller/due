@@ -351,6 +351,11 @@ class Task:
 
     def get_subtask(self, subtask_id):
 
+        # for root task id
+        if self.id == 'root' and subtask_id == 'root':
+            return self
+
+        # for numerical, period-delimited task ids
         task_list = self.subtasks
         digits_so_far = []
 
@@ -443,7 +448,27 @@ class Main:
         # save task tree to json file
         task_tree.to_json_file(task_file)
 
+    # @classmethod
+    # def rm_task(*args, **kwargs): #TODO
+    #     task_tree = Main.task_tree
+    #     id = kwargs['id_to_delete']
+    #     task_tree.get_subtask()
 
+    @classmethod
+    def complete_task(*args, **kwargs):
+        task_tree, task_file = Main.task_tree, Main.task_file
+        id = kwargs['id']
+        task_tree.get_subtask(id).complete = True
+        print(task_tree)
+        task_tree.to_json_file(task_file)
+
+    @classmethod
+    def uncomplete_task(*args, **kwargs):
+        task_tree, task_file = Main.task_tree, Main.task_file
+        id = kwargs['id']
+        task_tree.get_subtask(id).complete = False
+        print(task_tree)
+        task_tree.to_json_file(task_file)
 
 
 if __name__ == '__main__':
@@ -471,15 +496,28 @@ if __name__ == '__main__':
     add.add_argument('child_task_deadline',type=str)
     add.set_defaults(func=Main.add_task)
 
+    # due done
+    done = subcommands.add_parser('done')
+    done.add_argument('id',type=str)
+    done.set_defaults(func=Main.complete_task)
+
+    # due undone
+    undone = subcommands.add_parser('undone')
+    undone.add_argument('id',type=str)
+    undone.set_defaults(func=Main.uncomplete_task)
+
     # parse arguments and run
     args = due.parse_args()
     args.func(**vars(args)) #allows you to pass arguments to functions in Main class
 
 # TODO
 # ---
+# - due done --id 1.0 / due  --id 1.0
+
+# - due rm --id 1.0
+# - due reschedule --id 1.0 'new deadline' / due res -i 1.0 'new deadline' (remember to store when this deadline was originally scheduled in deadline_changes attribute)
 
 # the following functions should modify the source json file in addition to the task objects
-# - due add --id 1.0 'task name' 'deadline'
 # - due add --id 1.0 'task name' 'deadline' --repeat 'weekly:smtwtfs' --until 'date'
 #     - --repeat daily
 #     - --repeat weekly:smtwtfs
@@ -487,9 +525,6 @@ if __name__ == '__main__':
 #     - --repeat yearly
 #     * extra feature: accept cron job syntax here
 #     * extra feature: 'custom' monthly feature like "once every 2nd tuesday of the month"
-# - due rm --id 1.0
-# - due done --id 1.0 / due  --id 1.0
-# - due reschedule --id 1.0 'new deadline' / due res -i 1.0 'new deadline' (remember to store when this deadline was originally scheduled in deadline_changes attribute)
 
 # - due (by itself, this should show everything due today, over your weekly todo list)
 
@@ -561,7 +596,7 @@ if __name__ == '__main__':
     # how you get today's date from datetime:     datetime.today().strftime('%Y-%m-%d')
     # how to flatten a list in python: flattened_l = [item for sublist in l for item in sublist]
     # read the following articles and make flashcards: https://pymotw.com/3/datetime/index.html  https://pymotw.com/3/time/index.html
-
+    # read through the argparse tutorial from the python docs it's very good: https://docs.python.org/3/howto/argparse.html
 # Examples for documentation
     # # print(t.filter(lambda x: x.deadline == datetime.today().strftime('%Y-%m-%d')))
     # print('↓search↓')
@@ -579,3 +614,4 @@ if __name__ == '__main__':
 # - due today / due td
 # - due tomorrow / due tm
 # - due week (due this week) show  the week number, this week's date range, and all tasks due for the week
+# - due add --id 1.0 'task name' 'deadline'
