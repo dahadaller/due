@@ -367,12 +367,14 @@ class Task:
         return task
 
 class Main:
+    task_file = 'todo.json'
+
     today = datetime.today()
 
     cal_str = calendar.TextCalendar(calendar.SUNDAY).formatmonth(today.year, today.month)
-    task_tree = Task.from_json_file('todo.json') # TODO:  how can I change this to another file if i need to? or even another file type?
+    task_tree = Task.from_json_file(task_file) # TODO:  how can I change this to another file if i need to? or even another file type?
 
-    week_begin = today - timedelta(days=(today.weekday()+1)) #week begins on sunday
+    week_begin = today - timedelta(days=(today.weekday()+1) % 7) #week begins on sunday
     week_end = today + timedelta((calendar.SATURDAY-today.weekday()) % 7 ) # week ends on saturday
 
     @staticmethod
@@ -395,7 +397,7 @@ class Main:
         return ''.join(cal_list)
 
     @classmethod
-    def display_today(*args):
+    def display_today(*args,**kwargs):
         cal_str, today, task_tree, highlight_dates = Main.cal_str, Main.today, Main.task_tree, Main.highlight_dates
         print(highlight_dates(cal_str, today, today))
         print(task_tree
@@ -403,7 +405,7 @@ class Main:
             .search(lambda task: not task.complete))
 
     @classmethod
-    def display_tomorrow(*args):
+    def display_tomorrow(*args, **kwargs):
         cal_str, today, task_tree, highlight_dates = Main.cal_str, Main.today, Main.task_tree, Main.highlight_dates
         tomorrow = today + timedelta(days=1)
         print(highlight_dates(cal_str, tomorrow, tomorrow))
@@ -412,25 +414,38 @@ class Main:
             .search(lambda task: not task.complete))
 
     @classmethod
-    def display_week(*args):
+    def display_week(*args, **kwargs):
         cal_str, task_tree, week_begin, week_end, highlight_dates = Main.cal_str, Main.task_tree, Main.week_begin, Main.week_end, Main.highlight_dates
         print(highlight_dates(cal_str,week_begin,week_end))
         print(task_tree.due_by(week_end.strftime('%Y-%m-%d')))
 
     @classmethod
-    def add_task(*args):
-        task_tree = Main.task_tree
-        # arguments from command line:
-        id =
+    def add_task(*args, **kwargs):
+        task_tree, task_file = Main.task_tree, Main.task_file
 
-        task_tree.get_subtask(id).add_subtask(
-            Task(
+        # positional arguments from command line:
+        id = kwargs['parent_id']
+        task_name = kwargs['child_task_name']
+        deadline = kwargs['child_task_deadline']
 
+        # add subtask to task tree and print result to terminal
+        print(
+            task_tree.get_subtask(id).add_subtask(
+                Task(
+                    task_name =  task_name,
+                    deadline =  deadline
+                )
             )
         )
 
+        # repeated tasks (optional)
 
-        task_tree.
+        # save task tree to json file
+        task_tree.to_json_file(task_file)
+
+
+
+
 if __name__ == '__main__':
 
     # due
@@ -451,11 +466,14 @@ if __name__ == '__main__':
 
     # due add
     add = subcommands.add_parser('add')
+    add.add_argument('parent_id',type=str)
+    add.add_argument('child_task_name',type=str)
+    add.add_argument('child_task_deadline',type=str)
     add.set_defaults(func=Main.add_task)
 
     # parse arguments and run
     args = due.parse_args()
-    args.func()
+    args.func(**vars(args)) #allows you to pass arguments to functions in Main class
 
 # TODO
 # ---
@@ -493,6 +511,9 @@ if __name__ == '__main__':
 # - due week +1 (due next week)
 # - due week -1 (due last week)
 # - due week 3 (due 3rd week of year)
+
+# assert that deadlines of subtasks always be before or on the day of parent
+# tasks in the .add_subtask() method in the Task class.
 
 # * extra feature: use tree structure for tasks like this: https://stackoverflow.com/a/59109706/7215135
 # ├── package
