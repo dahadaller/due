@@ -349,6 +349,11 @@ class Task:
         self.subtasks.append(subtask)
         return self
 
+    def remove_subtask(self,id_digit):
+        #TODO: if no such task with ID exists, an error message should be printed
+        self.subtasks = [s for s in self.subtasks if s.id != id_digit]
+        return self
+
     def get_subtask(self, subtask_id):
 
         # for root task id
@@ -434,25 +439,28 @@ class Main:
         deadline = kwargs['child_task_deadline']
 
         # add subtask to task tree and print result to terminal
-        print(
-            task_tree.get_subtask(id).add_subtask(
-                Task(
-                    task_name =  task_name,
-                    deadline =  deadline
-                )
+        task_tree.get_subtask(id).add_subtask(
+            Task(
+                task_name =  task_name,
+                deadline =  deadline
             )
         )
+        print(task_tree)
 
         # repeated tasks (optional)
 
         # save task tree to json file
         task_tree.to_json_file(task_file)
 
-    # @classmethod
-    # def rm_task(*args, **kwargs): #TODO
-    #     task_tree = Main.task_tree
-    #     id = kwargs['id_to_delete']
-    #     task_tree.get_subtask()
+    @classmethod
+    def rm_task(*args, **kwargs):
+        task_tree, task_file = Main.task_tree, Main.task_file
+        id = kwargs['id'].split('.')
+        child_id = id[-1]
+        parent_id = '.'.join(id[:-1])
+        task_tree.get_subtask(parent_id).remove_subtask(child_id)
+        print(task_tree)
+        task_tree.to_json_file(task_file)
 
     @classmethod
     def complete_task(*args, **kwargs):
@@ -496,6 +504,11 @@ if __name__ == '__main__':
     add.add_argument('child_task_deadline',type=str)
     add.set_defaults(func=Main.add_task)
 
+    # due rm
+    rm = subcommands.add_parser('rm')
+    rm.add_argument('id',type=str)
+    rm.set_defaults(func=Main.rm_task)
+
     # due done
     done = subcommands.add_parser('done')
     done.add_argument('id',type=str)
@@ -512,9 +525,7 @@ if __name__ == '__main__':
 
 # TODO
 # ---
-# - due done --id 1.0 / due  --id 1.0
 
-# - due rm --id 1.0
 # - due reschedule --id 1.0 'new deadline' / due res -i 1.0 'new deadline' (remember to store when this deadline was originally scheduled in deadline_changes attribute)
 
 # the following functions should modify the source json file in addition to the task objects
@@ -615,3 +626,5 @@ if __name__ == '__main__':
 # - due tomorrow / due tm
 # - due week (due this week) show  the week number, this week's date range, and all tasks due for the week
 # - due add --id 1.0 'task name' 'deadline'
+# - due done --id 1.0 / due  --id 1.0
+# - due rm --id 1.0
