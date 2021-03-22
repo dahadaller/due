@@ -184,24 +184,35 @@ class Task:
         with open(file_path,'w') as write_file:
             json.dump([s.to_dict() for s in self.subtasks], write_file, indent=4)
 
-    def to_string(self, indent=0, max_depth=None):
+    def to_string(self, indent=0, max_depth=None, full_id=None, show_id=True, show_deadline=True, show_year=True, color=True):
+
+        full_id = self.id if full_id is None else full_id + "." + self.id
+        deadline = self.deadline if show_year else self.deadline[5:]
+        indents = ' ' * indent
+
+        magenta = "\u001b[35m"
+        cyan = "\u001b[36m"
+        reset_color = "\u001b[0m"
+
+        # recurse to create subtasks
         if max_depth is not None:
             if max_depth > 0:
-                subtasks = ''.join([s.to_string(indent+4, max_depth-1) for s in self.subtasks])
+                subtasks = ''.join([s.to_string(indent=indent+4, max_depth=max_depth-1, full_id=full_id) for s in self.subtasks])
             else:
                 subtasks = ''
         else:
-            subtasks = ''.join([s.to_string(indent+4) for s in self.subtasks])
+            subtasks = ''.join([s.to_string(indent=indent+4,full_id=full_id) for s in self.subtasks])
 
-        indents = ' ' * indent
-        checkbox = "☑" if self.complete else "☐"
-        output = "{indents}{complete} {deadline} {task_id} {task_name}\n{subtasks}".format(
+        output = "{indents}{checkbox} {task_name} {color_1}{deadline}{reset} {color_2}{full_id}{reset}\n{subtasks}".format(
             indents = indents,
-            task_id = self.id,
-            task_name =  self.name,
-            complete = checkbox,
-            deadline = self.deadline,
-            subtasks = subtasks)
+            full_id = full_id if show_id else '',
+            task_name = self.name,
+            checkbox = "☑" if self.complete else "☐",
+            deadline = deadline if show_deadline else '',
+            subtasks = subtasks,
+            color_1 = magenta if color else '',
+            color_2 = cyan if color else '',
+            reset = reset_color if color else '')
         return output
 
     def __str__(self):
@@ -478,13 +489,20 @@ class Main:
         print(task_tree)
         task_tree.to_json_file(task_file)
 
+    @classmethod
+    def ls(*args, **kwargs):
+        task_tree, task_file = Main.task_tree, Main.task_file
+        id = kwargs['id']
+        depth = kwargs['depth']
+        print(task_tree.get_subtask(id).to_string(max_depth=depth))
+
 
 if __name__ == '__main__':
 
     # due
     due = argparse.ArgumentParser(prog='due')
     subcommands = due.add_subparsers()
-    due.set_defaults(func=Main.display_today) # no subparser means display today
+    due.set_defaults(func=Main.display_today) # no subparser defaults to `due today`
 
     # due today
     today = subcommands.add_parser('today', aliases=['td'])
@@ -497,6 +515,16 @@ if __name__ == '__main__':
     # due week
     week = subcommands.add_parser('week', aliases=['we','w'])
     week.set_defaults(func=Main.display_week)
+
+    # due ls
+    ls = subcommands.add_parser('ls')
+    ls.add_argument('id',type=str)
+    ls.add_argument("-d", "--depth",type=int)
+    ls.add_argument("--done",action='store_true')
+    ls.add_argument("--notdone",action='store_true')
+    ls.add_argument("--nodates",action='store_true')
+    ls.add_argument("--noids",action='store_true')
+    ls.set_defaults(func=Main.ls)
 
     # due add
     add = subcommands.add_parser('add')
@@ -520,6 +548,7 @@ if __name__ == '__main__':
     undone.add_argument('id',type=str)
     undone.set_defaults(func=Main.uncomplete_task)
 
+
     # parse arguments and run
     args = due.parse_args()
     args.func(**vars(args)) #allows you to pass arguments to functions in Main class
@@ -527,10 +556,7 @@ if __name__ == '__main__':
 # TODO
 # ---
 
-# - due (by itself, this should show everything due today, over your weekly todo list)
 
-# - due ls --id 1.0 --depth 3 / due -i 1.0 -d 3 (list single list or subtask)
-# - due ls -- all / due ls -a (list all tasks including completed tasks)
 # - due ls / due (list all tasks that are uncompleted)
 
 # it should be an option to print todo's
@@ -639,3 +665,4 @@ if __name__ == '__main__':
 # - due add --id 1.0 'task name' 'deadline'
 # - due done --id 1.0 / due  --id 1.0
 # - due rm --id 1.0
+# # - due (by itself, this should show everything due today, over your weekly todo list)
