@@ -26,6 +26,10 @@ class Task:
     name : str
         The name of a Task desccribes what should be done to complete some
         objective.
+    kind : str
+        The kind of task (root, empty, None) distinguishes what kind of node
+        the Task object is. Task objects that are not subtasks are root.
+        Task objects with no Attributes are empty.
     deadline : str
         The deadline is a date in format date.strftime('%Y-%m-%d'),
         eg. 2021-03-21. The deadline is a date by which the task should be
@@ -50,7 +54,7 @@ class Task:
         Prints the animals name and what sound it makes
     """
 
-    def __init__(self, task_name, task_id='root', deadline=None, complete=False, deadline_changes = {}, subtasks = []):
+    def __init__(self, task_name, task_id='root', task_kind=None, deadline=None, complete=False, deadline_changes = {}, subtasks = []):
 
         """
         Creates an instance of a Task. Note that, if subtasks is a list of
@@ -69,6 +73,10 @@ class Task:
             tree. The root subtask has a task id of "root". For example, one
             heirarchy looks like this: "root" > "1" > "1.0" > "1.0.2" > "1.0.2.3",
             where ">" means "is parent task to" in this case. (default 'root')
+        task_kind : str, optional
+            The kind of task (root, empty, None) distinguishes what kind of node
+            the Task object is. Task objects that are not subtasks are root.
+            Task objects with no Attributes are empty.
         deadline : str, optional
             The deadline is a date in format date.strftime('%Y-%m-%d'),
             eg. 2021-03-21. The deadline is a date by which the task should be
@@ -92,6 +100,7 @@ class Task:
         self.deadline = deadline
         self.deadline_changes = {k:v for k,v in deadline_changes.items()}
         self.complete = complete
+        self.kind = task_kind
 
         # if subtasks is an array of dictionaries, Depth First Search
         # if isinstance(subtasks, dict):
@@ -109,6 +118,18 @@ class Task:
         # if subtasks is empty or is an array of Task objects
         else:
             self.subtasks = subtasks
+
+    @staticmethod
+    def empty():
+        return Task(
+            task_name = '',
+            task_id = '',
+            task_kind='empty',
+            deadline = '',
+            complete = None,
+            deadline_changes = {},
+            subtasks = []
+        )
 
     @staticmethod
     def from_dict(task_dict):
@@ -184,10 +205,30 @@ class Task:
         with open(file_path,'w') as write_file:
             json.dump([s.to_dict() for s in self.subtasks], write_file, indent=4)
 
-    def to_string(self, indent=0, max_depth=None, full_id=None, show_id=True, show_deadline=True, show_year=True, color=True):
+    def to_string(self, indent=0, max_depth=None, full_id='', show_id=True, show_deadline=True, show_year=True, color=False):
 
-        full_id = self.id if full_id is None else full_id + "." + self.id
-        deadline = self.deadline if show_year else self.deadline[5:]
+        if self.id == 'root':
+            full_id = ''
+        elif full_id == '':
+            full_id = self.id
+        else:
+            full_id = full_id + "." + self.id
+
+
+        if self.deadline:
+            deadline = self.deadline if show_year else self.deadline[5:]
+        else:
+            deadline = ''
+
+
+        if self.kind == 'empty' or self.id == 'root':
+            checkbox = ''
+        elif self.complete:
+            checkbox = "☑"
+        else:
+            checkbox = "☐"
+
+
         indents = ' ' * indent
 
         magenta = "\u001b[35m"
@@ -197,17 +238,18 @@ class Task:
         # recurse to create subtasks
         if max_depth is not None:
             if max_depth > 0:
-                subtasks = ''.join([s.to_string(indent=indent+4, max_depth=max_depth-1, full_id=full_id) for s in self.subtasks])
+                subtasks = ''.join([s.to_string(indent=indent+4, max_depth=max_depth-1, full_id=full_id,color=color) for s in self.subtasks])
             else:
                 subtasks = ''
         else:
-            subtasks = ''.join([s.to_string(indent=indent+4,full_id=full_id) for s in self.subtasks])
+            subtasks = ''.join([s.to_string(indent=indent+4,full_id=full_id,color=color) for s in self.subtasks])
+
 
         output = "{indents}{checkbox} {task_name} {color_1}{deadline}{reset} {color_2}{full_id}{reset}\n{subtasks}".format(
             indents = indents,
             full_id = full_id if show_id else '',
             task_name = self.name,
-            checkbox = "☑" if self.complete else "☐",
+            checkbox = checkbox,
             deadline = deadline if show_deadline else '',
             subtasks = subtasks,
             color_1 = magenta if color else '',
@@ -380,7 +422,7 @@ class Task:
             if not filtered:
                 # TODO: maybe this print statement shold be a part of the parser
                 print('No subtasks under task {digits_so_far} Check that your input,  {subtask_id}, is correct.'.format(digits_so_far='.'.join(digits_so_far), subtask_id=subtask_id))
-                return
+                return Task.empty() # return empty task
             task = filtered[0]
             task_list = task.subtasks
             digits_so_far.append(id_digit)
@@ -494,7 +536,19 @@ class Main:
         task_tree, task_file = Main.task_tree, Main.task_file
         id = kwargs['id']
         depth = kwargs['depth']
-        print(task_tree.get_subtask(id).to_string(max_depth=depth))
+        show_deadline = not kwargs['nodates']
+        show_year = not kwargs['noyear']
+        show_id = not kwargs['noids']
+        color = True
+
+        print(task_tree
+                .get_subtask(id)
+                .to_string(
+                    max_depth=depth,
+                    show_id=show_id,
+                    show_deadline=show_deadline,
+                    show_year=show_year,
+                    color=color))
 
 
 if __name__ == '__main__':
@@ -518,11 +572,12 @@ if __name__ == '__main__':
 
     # due ls
     ls = subcommands.add_parser('ls')
-    ls.add_argument('id',type=str)
+    ls.add_argument('id',type=str, nargs='?', default='root')
     ls.add_argument("-d", "--depth",type=int)
     ls.add_argument("--done",action='store_true')
     ls.add_argument("--notdone",action='store_true')
     ls.add_argument("--nodates",action='store_true')
+    ls.add_argument("--noyear",action='store_true')
     ls.add_argument("--noids",action='store_true')
     ls.set_defaults(func=Main.ls)
 
@@ -557,13 +612,6 @@ if __name__ == '__main__':
 # ---
 
 
-# - due ls / due (list all tasks that are uncompleted)
-
-# it should be an option to print todo's
-    # without the deadline date (this should be the default for 'due today')
-    # with or without the task id's
-    # also task id's should be chained to make it easier to remove them by id.
-
 
 # - due reschedule --id 1.0 'new deadline' / due res -i 1.0 'new deadline' (remember to store when this deadline was originally scheduled in deadline_changes attribute)
 
@@ -575,6 +623,8 @@ if __name__ == '__main__':
 #     - --repeat yearly
 #     * extra feature: accept cron job syntax here
 #     * extra feature: 'custom' monthly feature like "once every 2nd tuesday of the month"
+
+#  create a kind = root task and change all the task methods that test for root to use the self.kind attribute
 
 # find out how to set up virtual environment
 # - due ls --json (pipe out json to other applications)
@@ -666,3 +716,8 @@ if __name__ == '__main__':
 # - due done --id 1.0 / due  --id 1.0
 # - due rm --id 1.0
 # # - due (by itself, this should show everything due today, over your weekly todo list)
+# - due ls / due (list all tasks that are uncompleted)
+# it should be an option to print todo's
+    # without the deadline date (this should be the default for 'due today')
+    # with or without the task id's
+    # also task id's should be chained to make it easier to remove them by id.
