@@ -214,11 +214,12 @@ class Task:
         else:
             full_id = full_id + "." + self.id
 
-
-        if self.deadline:
-            deadline = self.deadline if show_year else self.deadline[5:]
-        else:
+        if not self.deadline:
             deadline = ''
+        elif not show_year:
+            deadline = self.deadline[5:]
+        else:
+            deadline = self.deadline
 
 
         if self.kind == 'empty' or self.id == 'root':
@@ -238,11 +239,11 @@ class Task:
         # recurse to create subtasks
         if max_depth is not None:
             if max_depth > 0:
-                subtasks = ''.join([s.to_string(indent=indent+4, max_depth=max_depth-1, full_id=full_id,color=color) for s in self.subtasks])
+                subtasks = ''.join([s.to_string(indent=indent+4, max_depth=max_depth-1, full_id=full_id,color=color,show_id=show_id, show_deadline=show_deadline, show_year=show_year,) for s in self.subtasks])
             else:
                 subtasks = ''
         else:
-            subtasks = ''.join([s.to_string(indent=indent+4,full_id=full_id,color=color) for s in self.subtasks])
+            subtasks = ''.join([s.to_string(indent=indent+4,full_id=full_id,color=color,show_id=show_id, show_deadline=show_deadline, show_year=show_year,) for s in self.subtasks])
 
 
         output = "{indents}{checkbox} {task_name} {color_1}{deadline}{reset} {color_2}{full_id}{reset}\n{subtasks}".format(
@@ -541,8 +542,16 @@ class Main:
         show_id = not kwargs['noids']
         color = True
 
+        if kwargs['done']:
+            f = lambda task: task.complete
+        elif kwargs['notdone']:
+            f = lambda task: not task.complete
+        else:
+            f = lambda task: True
+
         print(task_tree
                 .get_subtask(id)
+                .search(f)
                 .to_string(
                     max_depth=depth,
                     show_id=show_id,
@@ -603,15 +612,12 @@ if __name__ == '__main__':
     undone.add_argument('id',type=str)
     undone.set_defaults(func=Main.uncomplete_task)
 
-
     # parse arguments and run
     args = due.parse_args()
     args.func(**vars(args)) #allows you to pass arguments to functions in Main class
 
 # TODO
 # ---
-
-
 
 # - due reschedule --id 1.0 'new deadline' / due res -i 1.0 'new deadline' (remember to store when this deadline was originally scheduled in deadline_changes attribute)
 
