@@ -484,6 +484,7 @@ if __name__ == '__main__':
     # due
     due = argparse.ArgumentParser(prog='due')
     subcommands = due.add_subparsers()
+    due.set_defaults(func=Main.display_today) # no subparser means display today
 
     # due today
     today = subcommands.add_parser('today', aliases=['td'])
@@ -526,6 +527,18 @@ if __name__ == '__main__':
 # TODO
 # ---
 
+# - due (by itself, this should show everything due today, over your weekly todo list)
+
+# - due ls --id 1.0 --depth 3 / due -i 1.0 -d 3 (list single list or subtask)
+# - due ls -- all / due ls -a (list all tasks including completed tasks)
+# - due ls / due (list all tasks that are uncompleted)
+
+# it should be an option to print todo's
+    # without the deadline date (this should be the default for 'due today')
+    # with or without the task id's
+    # also task id's should be chained to make it easier to remove them by id.
+
+
 # - due reschedule --id 1.0 'new deadline' / due res -i 1.0 'new deadline' (remember to store when this deadline was originally scheduled in deadline_changes attribute)
 
 # the following functions should modify the source json file in addition to the task objects
@@ -536,12 +549,6 @@ if __name__ == '__main__':
 #     - --repeat yearly
 #     * extra feature: accept cron job syntax here
 #     * extra feature: 'custom' monthly feature like "once every 2nd tuesday of the month"
-
-# - due (by itself, this should show everything due today, over your weekly todo list)
-
-# - due ls --id 1.0 --depth 3 / due -i 1.0 -d 3 (list single list or subtask)
-# - due ls -- all / due ls -a (list all tasks including completed tasks)
-# - due ls / due (list all tasks that are uncompleted)
 
 # find out how to set up virtual environment
 # - due ls --json (pipe out json to other applications)
@@ -560,6 +567,10 @@ if __name__ == '__main__':
 
 # assert that deadlines of subtasks always be before or on the day of parent
 # tasks in the .add_subtask() method in the Task class.
+
+# look into the following links for testing and badges. I really want this project to be professional and maintainable.
+# https://www.freecodecamp.org/news/how-to-use-badges-to-stop-feeling-like-a-noob-d4e6600d37d2/
+# https://github.com/dwyl/repo-badges
 
 # * extra feature: use tree structure for tasks like this: https://stackoverflow.com/a/59109706/7215135
 # ├── package
