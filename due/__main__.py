@@ -5,7 +5,7 @@ from datetime import datetime, date, timedelta
 from itertools import chain
 from pathlib import Path
 
-
+from due.task import Task
 
 class Main:
     task_file = 'todo.json'
