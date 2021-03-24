@@ -4,6 +4,7 @@ import calendar
 
 from datetime import datetime, date, timedelta
 from itertools import chain
+from pathlib import Path
 
 class Task:
     """
@@ -559,6 +560,10 @@ class Main:
                     show_year=show_year,
                     color=color))
 
+    @classmethod 
+    init(*args,**kwargs):
+
+
 
 if __name__ == '__main__':
 
@@ -566,6 +571,11 @@ if __name__ == '__main__':
     due = argparse.ArgumentParser(prog='due')
     subcommands = due.add_subparsers()
     due.set_defaults(func=Main.display_today) # no subparser defaults to `due today`
+
+    # due init
+    init = subcommands.add_parser('init')
+    ls.add_argument('id',type=str, nargs='?', default='todo.json')
+    init.set_defaults(func=Main.init)
 
     # due today
     today = subcommands.add_parser('today', aliases=['td'])
@@ -619,6 +629,7 @@ if __name__ == '__main__':
 # TODO
 # ---
 
+# need due init command to create a new json file if none exists
 # - due reschedule --id 1.0 'new deadline' / due res -i 1.0 'new deadline' (remember to store when this deadline was originally scheduled in deadline_changes attribute)
 
 # the following functions should modify the source json file in addition to the task objects
@@ -629,6 +640,8 @@ if __name__ == '__main__':
 #     - --repeat yearly
 #     * extra feature: accept cron job syntax here
 #     * extra feature: 'custom' monthly feature like "once every 2nd tuesday of the month"
+
+
 
 #  create a kind = root task and change all the task methods that test for root to use the self.kind attribute
 
@@ -646,6 +659,9 @@ if __name__ == '__main__':
 # - due week +1 (due next week)
 # - due week -1 (due last week)
 # - due week 3 (due 3rd week of year)
+
+# TODO: is there a better way to work with the todo file filepaths and configurations files? Which file module should I use?
+
 
 # assert that deadlines of subtasks always be before or on the day of parent
 # tasks in the .add_subtask() method in the Task class.
@@ -687,6 +703,7 @@ if __name__ == '__main__':
 # TODO: implement function to filter deferments by category
 
 # TODO: put type hints in all functions
+
 
 # Flashcards to make:
     # using str.format() https://realpython.com/python-string-formatting/#2-new-style-string-formatting-strformat
