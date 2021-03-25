@@ -1,8 +1,18 @@
 
 TODO
 ---
+- need to specify how to make root, child and empty tasks with a 'kind' attribute. Also need to change all the functions that make reference to name=root
+- modify the .to_json() method to work with more node types than just root, so that other nodes can be output as json and piped to other applications
+- modify the .from_json() method to work with more node types than just the root, so that if you wanted to create a new task from a json file on the command line (like a milestone task), you could just write out a file, instead of punching it in the command line one by one.
+- in the same way you implement  .to_json()  and .from_json() implement...
+    - .from_yaml()
+    - .to_yaml()
+- due config --taskfile 'path/to/taskfile.json' should set a new default in the yaml config file 
+- need due init command to create a new json file if none exists. Where should application files be stored on linux? on windows? on mac? should I just put it in the user directory. 
 
-need due init command to create a new json file if none exists
+- due backup --yaml 'filename.yaml'
+- due backup --json 'filename.json'
+
 - due reschedule --id 1.0 'new deadline' / due res -i 1.0 'new deadline' (remember to store when this deadline was originally scheduled in deadline_changes attribute)
 
 the following functions should modify the source json file in addition to the task objects
@@ -15,25 +25,16 @@ the following functions should modify the source json file in addition to the ta
     * extra feature: 'custom' monthly feature like "once every 2nd tuesday of the month"
 
 
-
- create a kind = root task and change all the task methods that test for root to use the self.kind attribute
+- due week +1 (due next week)
+- due week -1 (due last week)
+- due week 3 (due 3rd week of year)
 
 find out how to set up virtual environment
 - due ls --json (pipe out json to other applications)
 - due ls --yaml (pipe out yaml to other applications)
 - due ls --md (pipe out mardkown to other applications)
 
-- due backup --yaml 'filename.yaml'
-- due backup --json 'filename.json'
-
- figure out how to set the default file to search for to make the root task/task tree.
 - argparse help menu setup
-
-- due week +1 (due next week)
-- due week -1 (due last week)
-- due week 3 (due 3rd week of year)
-
-TODO: is there a better way to work with the todo file filepaths and configurations files? Which file module should I use?
 
 
 assert that deadlines of subtasks always be before or on the day of parent
@@ -60,6 +61,7 @@ https://github.com/dwyl/repo-badges
 
 * extra feature: add week number loading bar to the today, week, tomorrow display functions.
 * extra feature: add loading bar for specific milestones to show how close until deadline
+* extra feature: I like the upcoming tasks view from todoster as seen here: https://github.com/SophieAu/todoster/blob/master/header.png
 
 * extra feature: you could add a utility to gather # TODO's from code with
     lines of text, filenames, and project names which could be added to your milestone tasks
@@ -91,6 +93,7 @@ Flashcards to make:
     how to flatten a list in python: flattened_l = [item for sublist in l for item in sublist]
     read the following articles and make flashcards: https://pymotw.com/3/datetime/index.html  https://pymotw.com/3/time/index.html
     read through the argparse tutorial from the python docs it's very good: https://docs.python.org/3/howto/argparse.html
+
 Examples for documentation
     # print(t.filter(lambda x: x.deadline == datetime.today().strftime('%Y-%m-%d')))
     print('↓search↓')
@@ -101,7 +104,6 @@ Examples for documentation
         for s2 in s1.promote(lambda x: x.deadline <= '2021-03-18'):
             print(s2)
     
-
 
 DONE
 ---
@@ -117,3 +119,7 @@ it should be an option to print todo's
     without the deadline date (this should be the default for 'due today')
     with or without the task id's
     also task id's should be chained to make it easier to remove them by id.
+-  figure out how to set the default file to search for to make the root task/task tree.
+- is there a better way to work with the todo file filepaths and configurations files? Which file module should I use? Yes, pathlib is the default since python 3.4. https://realpython.com/python-pathlib/
+- re-organize project according to the directory structure described in https://realpython.com/pypi-publish-python-package/#a-small-python-package
+- separate due.py into three files: __init__.py, __main__.py, task.py
