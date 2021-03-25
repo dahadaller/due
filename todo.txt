@@ -34,8 +34,13 @@ find out how to set up virtual environment
 - due ls --yaml (pipe out yaml to other applications)
 - due ls --md (pipe out mardkown to other applications)
 
+- write requirements.txt after seeing what libraries you're missing from your vanilla virtual environment
+
+- write docstrings for every method in the task class
 - argparse help menu setup
 
+- write a setup.py and a manifest.in file and then publish package to the test pypl instance mentioned here: https://realpython.com/pypi-publish-python-package/#a-small-python-package
+- try to install the application and test for bugs on your mac/linux make a checklist of things you could check for in the display options
 
 assert that deadlines of subtasks always be before or on the day of parent
 tasks in the .add_subtask() method in the Task class.
@@ -123,3 +128,4 @@ it should be an option to print todo's
 - is there a better way to work with the todo file filepaths and configurations files? Which file module should I use? Yes, pathlib is the default since python 3.4. https://realpython.com/python-pathlib/
 - re-organize project according to the directory structure described in https://realpython.com/pypi-publish-python-package/#a-small-python-package
 - separate due.py into three files: __init__.py, __main__.py, task.py
+- read about different types of config files and select one to use (chose YAML): https://martin-thoma.com/configuration-files-in-python/
