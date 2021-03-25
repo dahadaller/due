@@ -5,6 +5,8 @@ from datetime import datetime, date, timedelta
 from itertools import chain
 from pathlib import Path
 
+from due import TASK_FILE_PATH
+
 class Task:
     """
     A class that represents a Task. This is a recursive class, so subtasks
@@ -162,7 +164,7 @@ class Task:
             subtasks = task_dict.get('subtasks',[]))
 
     @staticmethod
-    def from_json_file(file_path):
+    def from_json_file(file=TASK_FILE_PATH):
         """
         Creates a root task, and then assigns all tasks in a json file
         as subtasks to this root task.
@@ -172,7 +174,7 @@ class Task:
         file_path: str
             The file path where the json file is located.
         """
-        with open(file_path, "r") as read_file:
+        with file.open(mode='r') as read_file:
             return Task(
                 task_name='root',
                 subtasks= json.load(read_file))
@@ -190,7 +192,7 @@ class Task:
             'complete':self.complete,
             'subtasks':  [s.to_dict() for s in self.subtasks]}
 
-    def to_json_file(self, file_path):
+    def to_json_file(self, file=TASK_FILE_PATH):
         """
         Creates a JSON file from the subtasks of  a root Task object (id='root')
 
@@ -202,7 +204,7 @@ class Task:
         """
         assert self.id == 'root', "Can only export root task to JSON."
 
-        with open(file_path,'w') as write_file:
+        with file.open(mode='w') as write_file:
             json.dump([s.to_dict() for s in self.subtasks], write_file, indent=4)
 
     def to_string(self, indent=0, max_depth=None, full_id='', show_id=True, show_deadline=True, show_year=True, color=False):

@@ -6,17 +6,11 @@ from itertools import chain
 from pathlib import Path
 
 from due.task import Task
+from due import CAL_STR, TODAY, WEEK_BEGIN, WEEK_END
+
 
 class Main:
-    task_file = 'todo.json'
-
-    today = datetime.today()
-
-    cal_str = calendar.TextCalendar(calendar.SUNDAY).formatmonth(today.year, today.month)
-    task_tree = Task.from_json_file(task_file) # TODO:  how can I change this to another file if i need to? or even another file type?
-
-    week_begin = today - timedelta(days=(today.weekday()+1) % 7) #week begins on sunday
-    week_end = today + timedelta((calendar.SATURDAY-today.weekday()) % 7 ) # week ends on saturday
+    task_tree = Task.from_json_file() # TODO: is there a way to put this in __init__.py?
 
     @staticmethod
     def highlight_dates(cal_str, begin_date, end_date):
@@ -39,30 +33,30 @@ class Main:
 
     @classmethod
     def display_today(*args,**kwargs):
-        cal_str, today, task_tree, highlight_dates = Main.cal_str, Main.today, Main.task_tree, Main.highlight_dates
-        print(highlight_dates(cal_str, today, today))
+        task_tree = Main.task_tree
+        print(Main.highlight_dates(CAL_STR, TODAY, TODAY))
         print(task_tree
-            .due_by(today.strftime('%Y-%m-%d'))
+            .due_by(TODAY.strftime('%Y-%m-%d'))
             .search(lambda task: not task.complete))
 
     @classmethod
     def display_tomorrow(*args, **kwargs):
-        cal_str, today, task_tree, highlight_dates = Main.cal_str, Main.today, Main.task_tree, Main.highlight_dates
-        tomorrow = today + timedelta(days=1)
-        print(highlight_dates(cal_str, tomorrow, tomorrow))
+        task_tree = Main.task_tree
+        tomorrow = TODAY + timedelta(days=1)
+        print(Main.highlight_dates(CAL_STR, tomorrow, tomorrow))
         print(task_tree
             .due_by(tomorrow.strftime('%Y-%m-%d'))
             .search(lambda task: not task.complete))
 
     @classmethod
     def display_week(*args, **kwargs):
-        cal_str, task_tree, week_begin, week_end, highlight_dates = Main.cal_str, Main.task_tree, Main.week_begin, Main.week_end, Main.highlight_dates
-        print(highlight_dates(cal_str,week_begin,week_end))
-        print(task_tree.due_by(week_end.strftime('%Y-%m-%d')))
+
+        print(Main.highlight_dates(CAL_STR,WEEK_BEGIN,WEEK_END))
+        print(task_tree.due_by(WEEK_END.strftime('%Y-%m-%d')))
 
     @classmethod
     def add_task(*args, **kwargs):
-        task_tree, task_file = Main.task_tree, Main.task_file
+        task_tree = Main.task_tree
 
         # positional arguments from command line:
         id = kwargs['parent_id']
@@ -81,37 +75,37 @@ class Main:
         # repeated tasks (optional)
 
         # save task tree to json file
-        task_tree.to_json_file(task_file)
+        task_tree.to_json_file()
 
     @classmethod
     def rm_task(*args, **kwargs):
-        task_tree, task_file = Main.task_tree, Main.task_file
+        task_tree = Main.task_tree
         id = kwargs['id'].split('.')
         child_id = id[-1]
         parent_id = '.'.join(id[:-1])
         task_tree.get_subtask(parent_id).remove_subtask(child_id)
         print(task_tree)
-        task_tree.to_json_file(task_file)
+        task_tree.to_json_file()
 
     @classmethod
     def complete_task(*args, **kwargs):
-        task_tree, task_file = Main.task_tree, Main.task_file
+        task_tree = Main.task_tree
         id = kwargs['id']
         task_tree.get_subtask(id).complete = True
         print(task_tree)
-        task_tree.to_json_file(task_file)
+        task_tree.to_json_file()
 
     @classmethod
     def uncomplete_task(*args, **kwargs):
-        task_tree, task_file = Main.task_tree, Main.task_file
+        task_tree = Main.task_tree
         id = kwargs['id']
         task_tree.get_subtask(id).complete = False
         print(task_tree)
-        task_tree.to_json_file(task_file)
+        task_tree.to_json_file()
 
     @classmethod
     def ls(*args, **kwargs):
-        task_tree, task_file = Main.task_tree, Main.task_file
+        task_tree = Main.task_tree
         id = kwargs['id']
         depth = kwargs['depth']
         show_deadline = not kwargs['nodates']
