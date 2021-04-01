@@ -1,7 +1,25 @@
-
 TODO
 ---
+app workflow:
+1. set your weekly tasks: each week, look at unifinished tasks under each milestone (date doesn't matter), and assign some of the tasks for this week (due date friday of this week).
+2. each day, take from the weekly tasks, and change the due date to the daily tasks
+
+- fix highlight_dates() and task tree errors when running `due week`
+    - take course on datetime in python from datacamp
+    - re-implement this code relying on datatime std library as much as possible
+
 - need to specify how to make root, child and empty tasks with a 'kind' attribute. Also need to change all the functions that make reference to name=root
+
+
+some important views:
+- list all long-term tasks (list only milestone tasks `due ls root --depth 1` should have a shortcut of some kind)
+- list all long-term tasks with subtasks (should have a shortcut to `due ls` that shows without root)
+- list a long-term tasks (milestone) with subtasks (ordered by due date) (this means sorting the tree by date)
+- list this week's tasks group by milestone (each milestone ordered, in turn, by deadline) (same sort function, different depth)
+- [DONE] list today's tasks
+- export data as time series json for vega
+- [DONE] show calendar in terminal (maybe with cal) https://askubuntu.com/questions/889112/is-there-a-command-to-display-a-calendar-in-the-terminal
+
 - modify the .to_json() method to work with more node types than just root, so that other nodes can be output as json and piped to other applications
 - modify the .from_json() method to work with more node types than just the root, so that if you wanted to create a new task from a json file on the command line (like a milestone task), you could just write out a file, instead of punching it in the command line one by one.
 - in the same way you implement  .to_json()  and .from_json() implement...

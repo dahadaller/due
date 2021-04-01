@@ -15,16 +15,18 @@ class Main:
     @staticmethod
     def highlight_dates(cal_str, begin_date, end_date):
 
+        print(begin_date, end_date)
+
         cal_list = list(cal_str)
 
         highlight_text = u"\u001b[7m" # ansi code for "reversed" (highlighted) text
         reset = u"\u001b[0m" #reset ansi to default
 
-        begin = begin_date.strftime('%d')
-        end = end_date.strftime('%d')
+        begin = begin_date.strftime(' %-d ')
+        end = end_date.strftime(' %-d ')
 
-        begin_idx = cal_str.rfind(begin)
-        end_idx = cal_str.rfind(end) + 1 + len(begin)
+        begin_idx = cal_str.rfind(begin) + 1
+        end_idx = cal_str.rfind(end) + len(begin)
 
         cal_list.insert(begin_idx,highlight_text)
         cal_list.insert(end_idx,reset)
