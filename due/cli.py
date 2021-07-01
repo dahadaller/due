@@ -99,8 +99,39 @@ class Commands:
 
     @classmethod
     def ls(*args, **kwargs):
+
+        # TODO: Fix this nasty KeyError with a try/except clause
+            # (env) david@Davids-MacBook-Air due % python -m due ls 1.0
+            # Traceback (most recent call last):
+            #   File "/opt/homebrew/Cellar/python@3.9/3.9.5/Frameworks/Python.framework/Versions/3.9/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+            #     return _run_code(code, main_globals, None,
+            #   File "/opt/homebrew/Cellar/python@3.9/3.9.5/Frameworks/Python.framework/Versions/3.9/lib/python3.9/runpy.py", line 87, in _run_code
+            #     exec(code, run_globals)
+            #   File "/Users/david/Desktop/due/due/__main__.py", line 64, in <module>
+            #     args.func(**vars(args)) #allows you to pass arguments to functions in Main class
+            #   File "/Users/david/Desktop/due/due/cli.py", line 128, in ls
+            #     display_tree = dfs(root_id,display_tree)
+            #   File "/Users/david/Desktop/due/due/cli.py", line 121, in dfs
+            #     for neighbor in task_tree.tree.adj[node]:
+            #   File "/Users/david/Desktop/due/env/lib/python3.9/site-packages/networkx/classes/coreviews.py", line 79, in __getitem__
+            #     return AtlasView(self._atlas[name])
+            # KeyError: '1.0'
+
+        ## TODO: these are to format output. I may not want to see the dates, year component of dates, or only tasks that aren't done.
+        ## Find out how to use rich to format output of task tree. Colors and unicode checkboxes would be nice.
+        # not_done = kwargs['notdone']
+        # no_dates = kwargs['nodates']
+        # no_year = kwargs['noyear']
+
+        # TODO: Find out how to filter your dfs by such elements as these. Maybe you can use a networkx filter function on
+        # the task_tree to filter the treebefore dfs() is called?
+        # depth = kwargs['depth']
+        # done = kwargs['done']
+
         task_tree = Commands.task_tree
-        display_tree = Tree('0')
+
+        root_id = kwargs['id']
+        display_tree = Tree(f"{root_id} {task_tree.tree.nodes[root_id]}")
 
         def dfs(node,display_tree):
 
@@ -111,7 +142,7 @@ class Commands:
             
             return display_tree
 
-        display_tree = dfs('0',display_tree)
+        display_tree = dfs(root_id,display_tree)
 
         print(display_tree)
 
