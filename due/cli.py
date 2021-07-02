@@ -16,6 +16,23 @@ class Commands:
     task_tree = TaskTree.load() # TODO: is there a way to put this in __init__.py?
 
     @staticmethod
+    def valid_date(date_string):
+        try:
+            return datetime.strptime(date_string, "%Y-%m-%d").date()
+        except ValueError:
+            msg = f"Not a valid date: '{date_string}'. Use YYYY-MM-DD format"
+            raise argparse.ArgumentTypeError(msg)
+
+    @staticmethod
+    def valid_id(id_string):
+            print(list(Commands.task_tree.tree.nodes))
+            if id_string in Commands.task_tree.tree.nodes:
+                return id_string
+            else:
+                msg = f"Id not found in task tree: '{id_string}'"
+                raise argparse.ArgumentTypeError(msg)
+
+    @staticmethod
     def highlight_dates(cal_str, begin_date, end_date):
         pass
         # print(begin_date, end_date)
@@ -100,42 +117,32 @@ class Commands:
     @classmethod
     def ls(*args, **kwargs):
 
-        # TODO: Fix this nasty KeyError with a try/except clause
-            # (env) david@Davids-MacBook-Air due % python -m due ls 1.0
-            # Traceback (most recent call last):
-            #   File "/opt/homebrew/Cellar/python@3.9/3.9.5/Frameworks/Python.framework/Versions/3.9/lib/python3.9/runpy.py", line 197, in _run_module_as_main
-            #     return _run_code(code, main_globals, None,
-            #   File "/opt/homebrew/Cellar/python@3.9/3.9.5/Frameworks/Python.framework/Versions/3.9/lib/python3.9/runpy.py", line 87, in _run_code
-            #     exec(code, run_globals)
-            #   File "/Users/david/Desktop/due/due/__main__.py", line 64, in <module>
-            #     args.func(**vars(args)) #allows you to pass arguments to functions in Main class
-            #   File "/Users/david/Desktop/due/due/cli.py", line 128, in ls
-            #     display_tree = dfs(root_id,display_tree)
-            #   File "/Users/david/Desktop/due/due/cli.py", line 121, in dfs
-            #     for neighbor in task_tree.tree.adj[node]:
-            #   File "/Users/david/Desktop/due/env/lib/python3.9/site-packages/networkx/classes/coreviews.py", line 79, in __getitem__
-            #     return AtlasView(self._atlas[name])
-            # KeyError: '1.0'
-
         ## TODO: these are to format output. I may not want to see the dates, year component of dates, or only tasks that aren't done.
         ## Find out how to use rich to format output of task tree. Colors and unicode checkboxes would be nice.
         # not_done = kwargs['notdone']
         # no_dates = kwargs['nodates']
         # no_year = kwargs['noyear']
 
-        # TODO: Find out how to filter your dfs by such elements as these. Maybe you can use a networkx filter function on
-        # the task_tree to filter the treebefore dfs() is called?
-        # depth = kwargs['depth']
-        # done = kwargs['done']
+        print(kwargs)
 
-        task_tree = Commands.task_tree
-
+        depth = kwargs['depth']
+        deadline = kwargs['deadline']
         root_id = kwargs['id']
+
+        if kwargs['done']==True: # TODO: --done flag will not produce a complete tree because children can be completed before parents and so there's no way to get to parents. need to use "promote" algorithm to elevate children in this case.
+            completion_status = True
+        elif kwargs['undone'] == True: 
+            completion_status = False
+        else:
+            completion_status = None
+
+        task_tree = Commands.task_tree.depth_limit(depth).due_by(deadline).completed(completion_status)
         display_tree = Tree(f"{root_id} {task_tree.tree.nodes[root_id]}")
 
         def dfs(node,display_tree):
 
             for neighbor in task_tree.tree.adj[node]:
+
                 # tree.add() returns a pointer to the node that was just added
                 branch = display_tree.add(f"{neighbor} {task_tree.tree.nodes[neighbor]}")
                 dfs(neighbor,branch)

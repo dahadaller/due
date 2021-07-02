@@ -28,10 +28,11 @@ if __name__ == '__main__':
 
     # due ls
     ls = subcommands.add_parser('ls')
-    ls.add_argument('id',type=str, nargs='?', default='0')
-    ls.add_argument("-d", "--depth",type=int) #TODO
-    ls.add_argument("--done",action='store_true') #TODO
-    ls.add_argument("--notdone",action='store_true') #TODO
+    ls.add_argument('id',type=Commands.valid_id, nargs='?', default='0')
+    ls.add_argument("-e", "--depth",type=int)
+    ls.add_argument("-d", "--deadline", type=Commands.valid_date)    
+    ls.add_argument("--done",action='store_true') 
+    ls.add_argument("--undone",action='store_true') 
     ls.add_argument("--nodates",action='store_true') #TODO
     ls.add_argument("--noyear",action='store_true') #TODO
     ls.add_argument("--noids",action='store_true') #TODO
