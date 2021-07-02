@@ -5,7 +5,7 @@ from datetime import datetime, date, timedelta
 from itertools import chain
 from pathlib import Path
 
-from rich import print
+from rich import print as rprint
 from rich.tree import Tree
 
 from due.tasks import TaskTree
@@ -25,7 +25,6 @@ class Commands:
 
     @staticmethod
     def valid_id(id_string):
-            print(list(Commands.task_tree.tree.nodes))
             if id_string in Commands.task_tree.tree.nodes:
                 return id_string
             else:
@@ -119,17 +118,16 @@ class Commands:
 
         ## TODO: these are to format output. I may not want to see the dates, year component of dates, or only tasks that aren't done.
         ## Find out how to use rich to format output of task tree. Colors and unicode checkboxes would be nice.
-        # not_done = kwargs['notdone']
         # no_dates = kwargs['nodates']
         # no_year = kwargs['noyear']
 
-        print(kwargs)
+        rprint(kwargs,'\n')
 
         depth = kwargs['depth']
         deadline = kwargs['deadline']
         root_id = kwargs['id']
 
-        if kwargs['done']==True: # TODO: --done flag will not produce a complete tree because children can be completed before parents and so there's no way to get to parents. need to use "promote" algorithm to elevate children in this case.
+        if kwargs['done'] == True: # TODO: --done flag will not produce a complete tree because children can be completed before parents and so there's no way to get to parents. need to use "promote" algorithm to elevate children in this case.
             completion_status = True
         elif kwargs['undone'] == True: 
             completion_status = False
@@ -143,15 +141,15 @@ class Commands:
 
             for neighbor in task_tree.tree.adj[node]:
 
-                # tree.add() returns a pointer to the node that was just added
-                branch = display_tree.add(f"{neighbor} {task_tree.tree.nodes[neighbor]}")
+                # the tree.add() method returns a pointer to the node that was just added
+                branch = display_tree.add(f"{neighbor} {task_tree.tree.nodes[neighbor]}") #TODO: display this nicely using rich
                 dfs(neighbor,branch)
             
             return display_tree
 
         display_tree = dfs(root_id,display_tree)
 
-        print(display_tree)
+        rprint(display_tree)
 
     
 
