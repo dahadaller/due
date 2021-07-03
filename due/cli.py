@@ -5,15 +5,16 @@ from datetime import datetime, date, timedelta
 from itertools import chain
 from pathlib import Path
 
+# from rich.console import Console
 from rich import print as rprint
 from rich.tree import Tree
 
-from due.tasks import TaskTree
-from due import CAL_STR, TODAY, WEEK_BEGIN, WEEK_END, TASK_FILE_PATH
 
+from due import CAL_STR, TODAY, WEEK_BEGIN, WEEK_END, TASK_TREE
+from due.configparse import TASK_FILE_PATH
+from due.tasks import TaskTree
 
 class Commands:
-    task_tree = TaskTree.load() # TODO: is there a way to put this in __init__.py?
 
     @staticmethod
     def valid_date(date_string):
@@ -25,7 +26,7 @@ class Commands:
 
     @staticmethod
     def valid_id(id_string):
-            if id_string in Commands.task_tree.tree.nodes:
+            if id_string in TASK_TREE.tree.nodes:
                 return id_string
             else:
                 msg = f"Id not found in task tree: '{id_string}'"
@@ -55,19 +56,19 @@ class Commands:
     @classmethod
     def display_today(*args,**kwargs):
         pass
-        # task_tree = Commands.task_tree
+        # TASK_TREE = TASK_TREE
         # print(Commands.highlight_dates(CAL_STR, TODAY, TODAY))
-        # print(task_tree
+        # print(TASK_TREE
         #     .due_by(TODAY.strftime('%Y-%m-%d'))
         #     .search(lambda task: not task.complete))
 
     @classmethod
     def display_tomorrow(*args, **kwargs):
         pass
-        # task_tree = Commands.task_tree
+        # TASK_TREE = TASK_TREE
         # tomorrow = TODAY + timedelta(days=1)
         # print(Commands.highlight_dates(CAL_STR, tomorrow, tomorrow))
-        # print(task_tree
+        # print(TASK_TREE
         #     .due_by(tomorrow.strftime('%Y-%m-%d'))
         #     .search(lambda task: not task.complete))
 
@@ -75,12 +76,12 @@ class Commands:
     def display_week(*args, **kwargs):
         pass
         # print(Commands.highlight_dates(CAL_STR,WEEK_BEGIN,WEEK_END))
-        # print(task_tree.due_by(WEEK_END.strftime('%Y-%m-%d')))
+        # print(TASK_TREE.due_by(WEEK_END.strftime('%Y-%m-%d')))
 
     @classmethod
     def add_task(*args, **kwargs):
         pass
-        # task_tree = Commands.task_tree
+        # TASK_TREE = TASK_TREE
 
         # # positional arguments from command line:
         # id = kwargs['parent_id']
@@ -88,18 +89,18 @@ class Commands:
         # deadline = kwargs['child_task_deadline']
 
         # # add subtask to task tree and print result to terminal
-        # task_tree.get_subtask(id).add_subtask(
+        # TASK_TREE.get_subtask(id).add_subtask(
         #     TaskTree(
         #         task_name =  task_name,
         #         deadline =  deadline
         #     )
         # )
-        # print(task_tree)
+        # print(TASK_TREE)
 
         # # repeated tasks (optional)
 
         # # save task tree to json file
-        # task_tree.to_json_file()
+        # TASK_TREE.to_json_file()
 
     @classmethod
     def rm_task(*args, **kwargs):
@@ -116,12 +117,25 @@ class Commands:
     @classmethod
     def ls(*args, **kwargs):
 
+        # from rich.theme import Theme
+        # # TODO: move the theme to __init__.py
+        # custom_theme = Theme({
+        #     "info" : "dim cyan",
+        #     "warning": "magenta",
+        #     "danger": "bold red"
+        # })
+        # console = Console(theme=custom_theme)
+        # console.print("This is information", style="info")
+        # console.print("[warning]The pod bay doors are locked[/warning]")
+        # console.print("Something terrible happened!", style="danger")
+
+
         ## TODO: these are to format output. I may not want to see the dates, year component of dates, or only tasks that aren't done.
         ## Find out how to use rich to format output of task tree. Colors and unicode checkboxes would be nice.
         # no_dates = kwargs['nodates']
         # no_year = kwargs['noyear']
 
-        rprint(kwargs,'\n')
+        rprint(kwargs,'\n') # TODO: delete this line after done testing
 
         depth = kwargs['depth']
         deadline = kwargs['deadline']
@@ -134,15 +148,15 @@ class Commands:
         else:
             completion_status = None
 
-        task_tree = Commands.task_tree.depth_limit(depth).due_by(deadline).completed(completion_status)
-        display_tree = Tree(f"{root_id} {task_tree.tree.nodes[root_id]}")
+        task_tree = TASK_TREE.depth_limit(depth).due_by(deadline).completed(completion_status)
+        display_tree = Tree(f"{root_id} {task_tree.tree.nodes[root_id]}",guide_style='blue')  #TODO: create a config-file theme with rich that can be used here
 
         def dfs(node,display_tree):
 
             for neighbor in task_tree.tree.adj[node]:
 
                 # the tree.add() method returns a pointer to the node that was just added
-                branch = display_tree.add(f"{neighbor} {task_tree.tree.nodes[neighbor]}") #TODO: display this nicely using rich
+                branch = display_tree.add(f"{neighbor} {task_tree.tree.nodes[neighbor]}")
                 dfs(neighbor,branch)
             
             return display_tree
