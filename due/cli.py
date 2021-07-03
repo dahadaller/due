@@ -5,13 +5,12 @@ from datetime import datetime, date, timedelta
 from itertools import chain
 from pathlib import Path
 
-# from rich.console import Console
-from rich import print as rprint
+from rich.console import Console
+# from rich import print as rprint
 from rich.tree import Tree
 
 
-from due import CAL_STR, TODAY, WEEK_BEGIN, WEEK_END, TASK_TREE
-from due.configparse import TASK_FILE_PATH
+from due import CAL_STR, TODAY, WEEK_BEGIN, WEEK_END, TASK_TREE, TASK_FILE_PATH, COLOR
 from due.tasks import TaskTree
 
 class Commands:
@@ -117,26 +116,7 @@ class Commands:
     @classmethod
     def ls(*args, **kwargs):
 
-        # from rich.theme import Theme
-        # # TODO: move the theme to __init__.py
-        # custom_theme = Theme({
-        #     "info" : "dim cyan",
-        #     "warning": "magenta",
-        #     "danger": "bold red"
-        # })
-        # console = Console(theme=custom_theme)
-        # console.print("This is information", style="info")
-        # console.print("[warning]The pod bay doors are locked[/warning]")
-        # console.print("Something terrible happened!", style="danger")
-
-
-        ## TODO: these are to format output. I may not want to see the dates, year component of dates, or only tasks that aren't done.
-        ## Find out how to use rich to format output of task tree. Colors and unicode checkboxes would be nice.
-        # no_dates = kwargs['nodates']
-        # no_year = kwargs['noyear']
-
-        rprint(kwargs,'\n') # TODO: delete this line after done testing
-
+        # PARSE COMMAND LINE ARGUMENTS
         depth = kwargs['depth']
         deadline = kwargs['deadline']
         root_id = kwargs['id']
@@ -148,22 +128,42 @@ class Commands:
         else:
             completion_status = None
 
+        # LOAD TASK TREE FROM JSON
         task_tree = TASK_TREE.depth_limit(depth).due_by(deadline).completed(completion_status)
-        display_tree = Tree(f"{root_id} {task_tree.tree.nodes[root_id]}",guide_style='blue')  #TODO: create a config-file theme with rich that can be used here
+
+        # PARSE CONFIG FILE CONTENTS
+        cons = Console(theme=COLOR)
+
+        # CREATE RICH TEXT TREE
+        display_tree = Tree(f"[task_id]{root_id}[/task_id]")
 
         def dfs(node,display_tree):
 
             for neighbor in task_tree.tree.adj[node]:
 
+                attr = task_tree.tree.nodes[neighbor]
+
+                if attr['complete']:
+
+                    line = f"[complete]{neighbor} {attr['task_name']} {attr['deadline']}[/complete]"
+
+                else:
+                    line = (
+                        f"[task_id]{neighbor}[/task_id] "
+                        f"[task_name]{attr['task_name']}[/task_name] " 
+                        f"[deadline]{attr['deadline']}[/deadline]" 
+                    )
+
                 # the tree.add() method returns a pointer to the node that was just added
-                branch = display_tree.add(f"{neighbor} {task_tree.tree.nodes[neighbor]}")
+                branch = display_tree.add(line)
                 dfs(neighbor,branch)
             
             return display_tree
 
         display_tree = dfs(root_id,display_tree)
 
-        rprint(display_tree)
+        cons.print(kwargs,'\n')
+        cons.print(display_tree)
 
     
 
