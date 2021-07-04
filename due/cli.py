@@ -13,6 +13,53 @@ from rich.tree import Tree
 from due import CAL_STR, TODAY, WEEK_BEGIN, WEEK_END, TASK_TREE, TASK_FILE_PATH, COLOR
 from due.tasks import TaskTree
 
+class RichTextTree:
+
+    @staticmethod 
+    def format_task(task_id, attr, noids, nodates, noyear):
+
+        if not attr:
+            line = '' if noids else f"[task_id]{task_id}[/task_id]"
+
+        elif  attr['complete']:
+            format_id =  '' if noids else f"{task_id} "
+            format_name = f"{attr['task_name']} "
+            deadline = attr['deadline'].strftime("%m-%d") if noyear else attr['deadline'].strftime("%Y-%m-%d")
+            format_deadline = '' if nodates else f"{deadline} "
+            line = f"[complete]{format_id} {format_name} {format_deadline}[/complete]"
+
+        else:
+            format_id =  '' if noids else f"[task_id]{task_id}[/task_id] "
+            format_name= f"[task_name]{attr['task_name']}[/task_name] "
+            deadline = attr['deadline'].strftime("%m-%d") if noyear else attr['deadline'].strftime("%Y-%m-%d")
+            format_deadline = '' if nodates else f"[deadline]{deadline}[/deadline] "
+            line = f"{format_id}{format_name}{format_deadline}"
+
+        return line
+
+    @staticmethod 
+    def format_tree(root_task_id, task_tree, noids, nodates, noyear):
+
+        # CREATE RICH TEXT TREE
+        attr = task_tree.tree.nodes[root_task_id]
+        display_tree = Tree(RichTextTree.format_task(root_task_id, attr, noids, nodates, noyear) )
+
+        def dfs(node,display_tree):
+
+            for neighbor in task_tree.tree.adj[node]:
+
+                attr = task_tree.tree.nodes[neighbor]
+                line = RichTextTree.format_task(neighbor, attr, noids, nodates, noyear)
+
+                # the tree.add() method returns a pointer to the node that was just added
+                branch = display_tree.add(line)
+                dfs(neighbor,branch)
+            
+            return display_tree
+
+        display_tree = dfs(root_task_id,display_tree)
+        return display_tree
+
 class Commands:
 
     @staticmethod
@@ -120,6 +167,9 @@ class Commands:
         depth = kwargs['depth']
         deadline = kwargs['deadline']
         root_id = kwargs['id']
+        noids = kwargs['noids']
+        nodates = kwargs['nodates']
+        noyear = kwargs['noyear']
 
         if kwargs['done'] == True: # TODO: --done flag will not produce a complete tree because children can be completed before parents and so there's no way to get to parents. need to use "promote" algorithm to elevate children in this case.
             completion_status = True
@@ -128,41 +178,21 @@ class Commands:
         else:
             completion_status = None
 
-        # LOAD TASK TREE FROM JSON
-        task_tree = TASK_TREE.depth_limit(depth).due_by(deadline).completed(completion_status)
+        # LOAD TASK TREE FROM JSON and filter based on cli args
+        task_tree = (
+            TASK_TREE
+            .depth_limit(depth)
+            .due_by(deadline)
+            .completed(completion_status)
+        )
 
-        # PARSE CONFIG FILE CONTENTS
+        # CREATE RICH TEXT TREE FROM TASK_TREE
+        display_tree = RichTextTree.format_tree(root_id, task_tree, noids, nodates, noyear)
+
+        # GET CONFIG FILE CONTENTS AND LOAD COLOR INTO CONSOLE AS THEME
         cons = Console(theme=COLOR)
 
-        # CREATE RICH TEXT TREE
-        display_tree = Tree(f"[task_id]{root_id}[/task_id]")
-
-        def dfs(node,display_tree):
-
-            for neighbor in task_tree.tree.adj[node]:
-
-                attr = task_tree.tree.nodes[neighbor]
-
-                if attr['complete']:
-
-                    line = f"[complete]{neighbor} {attr['task_name']} {attr['deadline']}[/complete]"
-
-                else:
-                    line = (
-                        f"[task_id]{neighbor}[/task_id] "
-                        f"[task_name]{attr['task_name']}[/task_name] " 
-                        f"[deadline]{attr['deadline']}[/deadline]" 
-                    )
-
-                # the tree.add() method returns a pointer to the node that was just added
-                branch = display_tree.add(line)
-                dfs(neighbor,branch)
-            
-            return display_tree
-
-        display_tree = dfs(root_id,display_tree)
-
-        cons.print(kwargs,'\n')
+        # DISPLAY RICH TEXT TREE ON CONSOLE
         cons.print(display_tree)
 
     

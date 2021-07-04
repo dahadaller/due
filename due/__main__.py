@@ -33,9 +33,9 @@ if __name__ == '__main__':
     ls.add_argument("-d", "--deadline", type=Commands.valid_date)    
     ls.add_argument("--done",action='store_true') 
     ls.add_argument("--undone",action='store_true') 
-    ls.add_argument("--nodates",action='store_true') #TODO
-    ls.add_argument("--noyear",action='store_true') #TODO
-    ls.add_argument("--noids",action='store_true') #TODO
+    ls.add_argument("--nodates",action='store_true')
+    ls.add_argument("--noyear",action='store_true')
+    ls.add_argument("--noids",action='store_true')
     ls.set_defaults(func=Commands.ls)
 
     # due add
