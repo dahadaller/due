@@ -12,7 +12,7 @@ TASK_FILE_PATH = TASK_FILE_PATH
 COLOR = COLOR
 
 # get today's date
-TODAY = datetime.today()
+TODAY = datetime.today().date()
 
 # create calendar for this month
 CAL_STR = calendar.TextCalendar(firstweekday=6).formatmonth(TODAY.year, TODAY.month)

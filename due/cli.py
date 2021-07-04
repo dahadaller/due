@@ -125,14 +125,55 @@ class Commands:
                 msg = f"Id not found in task tree: '{id_string}'"
                 raise argparse.ArgumentTypeError(msg)
 
+    @staticmethod
+    def ls(*args, **kwargs):
+
+        # PARSE COMMAND LINE ARGUMENTS
+        depth = kwargs['depth']
+        deadline = kwargs['deadline']
+        root_id = kwargs['id']
+        noids = kwargs['noids']
+        nodates = kwargs['nodates']
+        noyear = kwargs['noyear']
+
+        if kwargs['done'] == True: # TODO: --done flag will not produce a complete tree because children can be completed before parents and so there's no way to get to parents. need to use "promote" algorithm to elevate children in this case.
+            completion_status = True
+        elif kwargs['undone'] == True: 
+            completion_status = False
+        else:
+            completion_status = None
+
+        # LOAD TASK TREE FROM JSON and filter based on cli args
+        task_tree = (
+            TASK_TREE
+            .depth_limit(depth)
+            .due_by(deadline)
+            .completed(completion_status)
+        )
+
+        # CREATE RICH TEXT TREE FROM TASK_TREE
+        display_tree = RichTextTree.format_tree(root_id, task_tree, noids, nodates, noyear)
+
+        # GET CONFIG FILE CONTENTS AND LOAD COLOR INTO CONSOLE AS THEME
+        cons = Console(theme=COLOR)
+
+        # DISPLAY RICH TEXT TREE ON CONSOLE
+        cons.print(display_tree)
+
     @classmethod
     def display_today(*args,**kwargs):
-        pass
-        # TASK_TREE = TASK_TREE
-        # print(Commands.highlight_dates(CAL_STR, TODAY, TODAY))
-        # print(TASK_TREE
-        #     .due_by(TODAY.strftime('%Y-%m-%d'))
-        #     .search(lambda task: not task.complete))
+        RichTextCal.print_day()
+        Commands.ls(
+            id='0',
+            depth= None,
+            done= False,
+            undone= True,
+            nodates= True,
+            noids=False,
+            noyear=False,
+            deadline=TODAY
+        )
+
 
     @classmethod
     def display_tomorrow(*args, **kwargs):
@@ -186,45 +227,7 @@ class Commands:
     def uncomplete_task(*args, **kwargs):
         pass
 
-    @staticmethod
-    def ls(*args, **kwargs):
 
-        # PARSE COMMAND LINE ARGUMENTS
-        depth = kwargs['depth']
-        deadline = kwargs['deadline']
-        root_id = kwargs['id']
-        noids = kwargs['noids']
-        nodates = kwargs['nodates']
-        noyear = kwargs['noyear']
-
-        if kwargs['done'] == True: # TODO: --done flag will not produce a complete tree because children can be completed before parents and so there's no way to get to parents. need to use "promote" algorithm to elevate children in this case.
-            completion_status = True
-        elif kwargs['undone'] == True: 
-            completion_status = False
-        else:
-            completion_status = None
-
-        # LOAD TASK TREE FROM JSON and filter based on cli args
-        task_tree = (
-            TASK_TREE
-            .depth_limit(depth)
-            .due_by(deadline)
-            .completed(completion_status)
-        )
-
-        # CREATE RICH TEXT TREE FROM TASK_TREE
-        display_tree = RichTextTree.format_tree(root_id, task_tree, noids, nodates, noyear)
-
-        # GET CONFIG FILE CONTENTS AND LOAD COLOR INTO CONSOLE AS THEME
-        cons = Console(theme=COLOR)
-
-        RichTextCal.print_week(25)
-        RichTextCal.print_day(6)
-
-        # DISPLAY RICH TEXT TREE ON CONSOLE
-        cons.print(display_tree)
-
-    
 
     # @classmethod 
     # init(*args,**kwargs):
