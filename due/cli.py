@@ -1,6 +1,7 @@
 import json
 import argparse
 import calendar
+import re
 from datetime import datetime, date, timedelta
 from itertools import chain
 from pathlib import Path
@@ -10,8 +11,54 @@ from rich.console import Console
 from rich.tree import Tree
 
 
-from due import CAL_STR, TODAY, WEEK_BEGIN, WEEK_END, TASK_TREE, TASK_FILE_PATH, COLOR
+from due import CAL_STR, TODAY, TASK_TREE, TASK_FILE_PATH, COLOR
 from due.tasks import TaskTree
+
+class RichTextCal:
+
+    @staticmethod
+    def header_offset():
+        # find the end index of the calendar header
+        cal_header_pattern = re.compile(r"Sa\n",re.MULTILINE)
+        match = cal_header_pattern.search(CAL_STR)
+        header_offset = match.end()
+        return header_offset
+
+    @staticmethod
+    def highlight_match(regex, multiline=False):
+        # find start and end indexes for regex in CAL_STR
+        header_offset = RichTextCal.header_offset()
+        pattern = re.compile(regex,re.MULTILINE) if multiline else re.compile(regex)
+        match = pattern.search(CAL_STR[header_offset:])
+        match_start, match_end = header_offset+match.start(), header_offset+match.end()
+        cal_str = (
+            CAL_STR[:match_start] + 
+            r"[reverse]" + 
+            CAL_STR[match_start:match_end] + 
+            r"[/reverse]" + 
+            CAL_STR[match_end:]
+        )
+        return cal_str
+
+
+    @staticmethod
+    def print_week(day=TODAY.day):
+        # highlights week around a given day on calendar
+        week_regex = rf"^.*\b{day}.*$"
+        cal_str = RichTextCal.highlight_match(week_regex, multiline=True)
+        cons = Console(theme=COLOR)
+        cons.print(cal_str, highlight=False) #highlight=False because I don't want numbers to be highlighted different color
+
+
+    @staticmethod
+    def print_day(day=TODAY.day):
+        # highlights day only on calendar
+
+        # want to highlight space in front of day if it's only one digit.
+        day_regex = f' {day}' if len(str(day)) == 1 else str(day)
+        cal_str = RichTextCal.highlight_match(day_regex, multiline=False)
+        cons = Console(theme=COLOR)
+        cons.print(cal_str, highlight=False) #highlight=False because I don't want numbers to be highlighted different color
 
 class RichTextTree:
 
@@ -78,27 +125,6 @@ class Commands:
                 msg = f"Id not found in task tree: '{id_string}'"
                 raise argparse.ArgumentTypeError(msg)
 
-    @staticmethod
-    def highlight_dates(cal_str, begin_date, end_date):
-        pass
-        # print(begin_date, end_date)
-
-        # cal_list = list(cal_str)
-
-        # highlight_text = u"\u001b[7m" # ansi code for "reversed" (highlighted) text
-        # reset = u"\u001b[0m" #reset ansi to default
-
-        # begin = begin_date.strftime(' %-d ')
-        # end = end_date.strftime(' %-d ')
-
-        # begin_idx = cal_str.rfind(begin) + 1
-        # end_idx = cal_str.rfind(end) + len(begin)
-
-        # cal_list.insert(begin_idx,highlight_text)
-        # cal_list.insert(end_idx,reset)
-
-        # return ''.join(cal_list)
-
     @classmethod
     def display_today(*args,**kwargs):
         pass
@@ -160,7 +186,7 @@ class Commands:
     def uncomplete_task(*args, **kwargs):
         pass
 
-    @classmethod
+    @staticmethod
     def ls(*args, **kwargs):
 
         # PARSE COMMAND LINE ARGUMENTS
@@ -191,6 +217,9 @@ class Commands:
 
         # GET CONFIG FILE CONTENTS AND LOAD COLOR INTO CONSOLE AS THEME
         cons = Console(theme=COLOR)
+
+        RichTextCal.print_week(25)
+        RichTextCal.print_day(6)
 
         # DISPLAY RICH TEXT TREE ON CONSOLE
         cons.print(display_tree)

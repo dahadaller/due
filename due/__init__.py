@@ -11,11 +11,11 @@ __version__ = "1.0.0"
 TASK_FILE_PATH = TASK_FILE_PATH
 COLOR = COLOR
 
-# get dates from system
+# get today's date
 TODAY = datetime.today()
-CAL_STR = calendar.TextCalendar(calendar.SUNDAY).formatmonth(TODAY.year, TODAY.month)
-WEEK_BEGIN = TODAY - timedelta(days=(TODAY.weekday()+1) % 7) #week begins on sunday
-WEEK_END = TODAY + timedelta((calendar.SATURDAY-TODAY.weekday()) % 7 ) # week ends on saturday
+
+# create calendar for this month
+CAL_STR = calendar.TextCalendar(firstweekday=6).formatmonth(TODAY.year, TODAY.month)
 
 # load task tree from json
 TASK_TREE = TaskTree.load()
