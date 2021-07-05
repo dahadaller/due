@@ -110,6 +110,13 @@ class RichTextTree:
 class Commands:
 
     @staticmethod
+    def get_next_saturday(date_val):
+        #12 = 5 mod 7 and 5 is what .weekday() returns for saturday
+        days_to_next_saturday = timedelta((12 - date_val.weekday()) % 7) 
+        saturday = date_val + days_to_next_saturday
+        return saturday
+
+    @staticmethod
     def valid_date(date_string):
         try:
             return datetime.strptime(date_string, "%Y-%m-%d").date()
@@ -177,19 +184,32 @@ class Commands:
 
     @classmethod
     def display_tomorrow(*args, **kwargs):
-        pass
-        # TASK_TREE = TASK_TREE
-        # tomorrow = TODAY + timedelta(days=1)
-        # print(Commands.highlight_dates(CAL_STR, tomorrow, tomorrow))
-        # print(TASK_TREE
-        #     .due_by(tomorrow.strftime('%Y-%m-%d'))
-        #     .search(lambda task: not task.complete))
+        tomorrow = TODAY + timedelta(days=1)
+        RichTextCal.print_day(tomorrow.day)
+        Commands.ls(
+            id='0',
+            depth= None,
+            done= False,
+            undone= True,
+            nodates= True,
+            noids=False,
+            noyear=False,
+            deadline=tomorrow
+        )
 
     @classmethod
     def display_week(*args, **kwargs):
-        pass
-        # print(Commands.highlight_dates(CAL_STR,WEEK_BEGIN,WEEK_END))
-        # print(TASK_TREE.due_by(WEEK_END.strftime('%Y-%m-%d')))
+        RichTextCal.print_week()
+        Commands.ls(
+            id='0',
+            depth= None,
+            done= False,
+            undone= True,
+            nodates= True,
+            noids=False,
+            noyear=False,
+            deadline=Commands.get_next_saturday(TODAY)
+        )
 
     @classmethod
     def add_task(*args, **kwargs):

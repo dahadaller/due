@@ -26,6 +26,9 @@ if __name__ == '__main__':
     week = subcommands.add_parser('week', aliases=['we','w'])
     week.set_defaults(func=Commands.display_week)
 
+    # TODO:
+    # add subcommand 'due on YYYY-MM-DD' which should be an alias for `due ls -on YYYY-MM-DD` 
+
     # due ls
     ls = subcommands.add_parser('ls')
     ls.add_argument('id',type=Commands.valid_id, nargs='?', default='0')
@@ -38,6 +41,7 @@ if __name__ == '__main__':
     ls.add_argument("--noids",action='store_true')
     ls.set_defaults(func=Commands.ls)
 
+    # TODO:
     # due add
     add = subcommands.add_parser('add')
     add.add_argument('parent_id',type=str)
@@ -45,16 +49,19 @@ if __name__ == '__main__':
     add.add_argument('child_task_deadline',type=str)
     add.set_defaults(func=Commands.add_task)
 
+    # TODO:
     # due rm
     rm = subcommands.add_parser('rm')
     rm.add_argument('id',type=str)
     rm.set_defaults(func=Commands.rm_task)
 
+    # TODO:
     # due done
     done = subcommands.add_parser('done')
     done.add_argument('id',type=str)
     done.set_defaults(func=Commands.complete_task)
 
+    # TODO:
     # due undone
     undone = subcommands.add_parser('undone')
     undone.add_argument('id',type=str)
