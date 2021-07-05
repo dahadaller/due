@@ -2,6 +2,8 @@ task_file: /Users/david/Desktop/due/todo.json
 color:
   task_id: '#14A2D2'   # blue
   task_name: '#FFFFFF' # white
-  deadline: '#FEA971' #orange
+  deadline: '#96368C' #green
   complete: '#196719 reverse' #green highlight
   guide_line: '#FFFFFF' # white
+  delete: '#90323D reverse' #red
+  incomplete: '#FFFFFF reverse' # white

@@ -61,6 +61,13 @@ class RichTextCal:
         cons.print(cal_str, highlight=False) #highlight=False because I don't want numbers to be highlighted different color
 
 class RichTextTree:
+    # TODO: clean up this class. I believe format_task() should call print_task() and print_task should be renamed
+    # TODO: don't need to pass attr for this function. this can be retrieved from TASK_TREE using TASK_TREE.tree.nodes[kwargs['id']
+    @staticmethod
+    def print_task(task_id, attr, tag, message):
+        t_id, name, deadline = task_id, attr['task_name'], attr['deadline'].strftime("%Y-%m-%d")
+        line = f"{message}: [{tag}]{t_id} {name} {deadline}[/{tag}]"
+        return line
 
     @staticmethod 
     def format_task(task_id, attr, noids, nodates, noyear):
@@ -68,6 +75,7 @@ class RichTextTree:
         if not attr:
             line = '' if noids else f"[task_id]{task_id}[/task_id]"
 
+        # if task is complete, appy [complete] tags
         elif  attr['complete']:
             format_id =  '' if noids else f"{task_id} "
             format_name = f"{attr['task_name']} "
@@ -75,6 +83,7 @@ class RichTextTree:
             format_deadline = '' if nodates else f"{deadline} "
             line = f"[complete]{format_id} {format_name} {format_deadline}[/complete]"
 
+        # if task isn't complete, just display id, name and deadline
         else:
             format_id =  '' if noids else f"[task_id]{task_id}[/task_id] "
             format_name= f"[task_name]{attr['task_name']}[/task_name] "
@@ -237,16 +246,24 @@ class Commands:
 
     @classmethod
     def rm_task(*args, **kwargs):
-        pass
+        # TODO: displays deleted task in terminal; make it actually change the task
+        line = RichTextTree.print_task(kwargs['id'],TASK_TREE.tree.nodes[kwargs['id']],'delete','deleted')
+        cons=Console(theme=COLOR)
+        cons.print(line)
 
     @classmethod
     def complete_task(*args, **kwargs):
-        pass
+        # TODO: displays complete task in terminal; make it actually change the task
+        line = RichTextTree.print_task(kwargs['id'],TASK_TREE.tree.nodes[kwargs['id']],'complete','marked done')
+        cons=Console(theme=COLOR)
+        cons.print(line)
 
     @classmethod
     def uncomplete_task(*args, **kwargs):
-        pass
-
+        # TODO: displays incomplete task in terminal; make it actually change the task
+        line = RichTextTree.print_task(kwargs['id'],TASK_TREE.tree.nodes[kwargs['id']],'incomplete','marked undone')
+        cons=Console(theme=COLOR)
+        cons.print(line)
 
 
     # @classmethod 
